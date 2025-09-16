@@ -1,2 +1,3 @@
-# map-and-planet-name-generator
-A small planet and map name generator running on HMTL
+# Boss665s-name-generator
+1. A small planet and map name generator
+2. Military Operation name generator
