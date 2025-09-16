@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale-scale=1" />
+  <title>Fictional Planet & Area Name Generator</title>
+  <style>
+    body{font-family:Arial, sans-serif; background:#353839; color:#F5F5F5; margin:0; padding:20px; display:flex; justify-content:center;}
+    .container{max-width:900px; width:100%;}
+    h1{margin-top:0;}
+    .controls{background:#4B0082; padding:16px; border-radius:8px; margin-bottom:20px;}
+    label{display:block; margin-bottom:6px; font-size:14px; color:#D3D3D3;}
+    select,input{width:100%; padding:6px; margin-bottom:12px; border-radius:4px; border:1px solid #5A4A7B; background:#353839; color:#F5F5F5;}
+    button{background:#0F52BA; color:white; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; margin-right:8px; transition: background-color 0.2s;}
+    button:hover{background:#1E63C8;}
+    button.secondary{background:#353839; border: 1px solid #5A4A7B;}
+    button.secondary:hover{background:#4A4E50;}
+    .output{background:#4B0082; padding:16px; border-radius:8px; max-height:400px; overflow:auto;}
+    .name{padding:6px 0; border-bottom:1px solid #5A4A7B;}
+    .name:last-child{border-bottom:none;}
+    .muted{color:#D3D3D3; font-size:12px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Fictional Planet & Area Generator</h1>
+    <p class="muted">Generate random names for planets, moons, star systems, and regions.</p>
+
+    <div class="controls">
+      <label for="type">Type of name</label>
+      <select id="type">
+        <option value="planet">Planet</option>
+        <option value="moon">Moon</option>
+        <option value="system">Star System</option>
+        <option value="area">Continent / Region</option>
+      </select>
+
+      <label for="count">How many names</label>
+      <input id="count" type="number" value="10" min="1" max="200" />
+
+      <button id="generate">Generate</button>
+      <button id="copy" class="secondary">Copy to clipboard</button>
+      <button id="download" class="secondary">Download .txt</button>
+    </div>
+
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    // Expanded datasets of syllables and prefixes/suffixes
+    const PREFIXES = [
+      "Astra","Nova","Zyra","Vel","Altair","Orion","Epsilon","Lyra","Vega","Cygnus",
+      "Draco","Seren","Kryos","Nebula","Arkan","Phobos","Solara","Quorra","Lunaris","Cetus",
+      "Xandar","Galatea","Polaris","Rhea","Titan","Umbra","Nyx","Hyperion","Zephra","Oblivion",
+      "Kaelor","Myrrh","Thanis","Vor","Acheron","Aurelia","Cryon","Xerra","Demeris","Jovian",
+      "Eryndor","Thalassa","Krynn","Altan","Orbis","Caelum","Noctis","Zerath","Pyrrha","Selene",
+      "Veridia","Krypton","Solitude","Seraph","Genesis","Exodus","Elysium","Terminus","Aethel","Vesper",
+      "Helios","Pulsar","Quasar","Rigel","Deneb","Fomalhaut","Eridanus","Kepler","Gliese","Trappist",
+      "Corvus","Pegasus","Andromeda","Cassiopeia","Centauri","Proxima","Sol","Terra","Mars","Jupiter",
+      "Saturnus","Neptunus","Uranus","Pluto","Charon","Styx","Kerberos","Nix","Hydra","Eris"
+    ];
+
+    const SUFFIXES = [
+      "-ia","-on","-ara","-ora","-us","-ar","-ium","-ea","-or","-eth",
+      "-arae","-ara Prime","-is","-ara Major","-ara Minor","-ae","-eron","-exis","-ara IX","-ora VII",
+      "-ion","-yra","-ara Nova","-ios","-ora Prime","-ara Ultima","-ara Secundus","-axis","-yros","-ara IV",
+      "-eos","-ara Beta","-ora Delta","-ara Omega","-ora Alpha","-ara Sigma","-is IV","-or Prime","-ara Prime II","-oth",
+      "-yss","-ara Centauri","-ara Borealis","-ara Australis","-ara Nebula","-ara Zenith","-ara Solis","-ora Inferna","-ara Polaris","-ara Astralis",
+      "-gard","-ides","-os","-ys","-us Prime","-us Minor","-is Major","-is Secundus","-ix","-heim",
+      "-ia Proxima","-ia Ultima","-os IV","-os IX","-eth Major","-eth Minor","-ara Tertius","-is VI","-es","-et"
+    ];
+
+    const AREA_PREFIXES = [
+      "Nor","Zan","Ver","Kael","Thal","Mir","Xen","Orr","Dru","Cind",
+      "Ral","Fen","Cor","Bran","Tyr","Quen","Vor","Nym","Sil","Pyr",
+      "Mar","Zen","Lyr","Cairn","Ael","Dorn","Syra","Elth","Jor","Myth",
+      "Kyr","Tor","Vorn","Eld","Fey","Grav","Lun","Cry","Val","Orrin",
+      "Thera","Ulth","Ost","Khar","Vey","Dros","Sarn","Wyr","Ery","Bryn",
+      "Grim","Ash","Storm","Sun","Iron","Whisper","Shadow","Gloom","Star","River",
+      "Stone","Cloud","Mist","Frost","Fire","Blood","Silver","Golden","Bronze","Ember",
+      "Hallow","Dragon","Wolf","Bear","Eagle","Serpent","Spider","Grave","Rune","Soul"
+    ];
+
+    const AREA_SUFFIXES = [
+      "land","dor","mere","fell","vale","reach","heim","moor","crest","fjord",
+      "hold","hollow","spire","wilds","plains","marsh","waste","crag","barrens","hills",
+      "steppe","desert","forest","woods","grove","delta","shores","cove","isle","archipelago",
+      "expanse","belt","depths","basin","rift","canyon","cliffs","peaks","glades","savanna",
+      "plateau","dunes","fen","swamp","bog","highlands","lowlands","gulch","ridge","fields",
+      "glade","valley","pass","mire","tundra","coast","wood","gard","mark","bluff",
+      "break","run","crossing","watch","grave","burn","fall","ascent","descent","peak"
+    ];
+
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function generatePlanetName(){
+      return pick(PREFIXES) + pick(SUFFIXES);
+    }
+
+    function generateAreaName(){
+      return pick(AREA_PREFIXES) + pick(AREA_SUFFIXES);
+    }
+
+    function generateNames(type, count){
+      const results = [];
+      for(let i=0;i<count;i++){
+        if(type === 'planet' || type === 'moon' || type === 'system'){
+          results.push(generatePlanetName());
+        } else {
+          results.push(generateAreaName());
+        }
+      }
+      return results;
+    }
+
+    const outputEl = document.getElementById('output');
+    const typeEl = document.getElementById('type');
+    const countEl = document.getElementById('count');
+    const generateBtn = document.getElementById('generate');
+    const copyBtn = document.getElementById('copy');
+    const downloadBtn = document.getElementById('download');
+
+    let lastResults = [];
+
+    function render(results){
+      outputEl.innerHTML = '';
+      results.forEach((name,i)=>{
+        const div = document.createElement('div');
+        div.className = 'name';
+        div.textContent = `${i+1}. ${name}`;
+        outputEl.appendChild(div);
+      });
+      lastResults = results;
+    }
+
+    generateBtn.addEventListener('click', ()=>{
+      const type = typeEl.value;
+      const count = Math.min(200, Math.max(1, parseInt(countEl.value)||10));
+      const names = generateNames(type, count);
+      render(names);
+    });
+
+    copyBtn.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(lastResults.join('\n'));
+        copyBtn.textContent = 'Copied!';
+        setTimeout(()=> copyBtn.textContent = 'Copy to clipboard', 1500);
+      }catch(err){
+        alert('Copy failed.');
+      }
+    });
+
+    downloadBtn.addEventListener('click', ()=>{
+      const blob = new Blob([lastResults.join('\n')], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'names.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Generate some names at start
+    render(generateNames('planet',10));
+  </script>
+</body>
+</html>
