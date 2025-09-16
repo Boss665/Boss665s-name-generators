@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Advanced Military Operation Name Generator</title>
+  <style>
+    body{font-family:Arial, sans-serif; background:#111827; color:#F9FAFB; margin:0; padding:20px; display:flex; justify-content:center;}
+    .container{max-width:900px; width:100%;}
+    h1{margin-top:0;}
+    .controls{background:#1F2937; padding:16px; border-radius:8px; margin-bottom:20px; border: 1px solid #374151;}
+    label{display:block; margin-bottom:6px; font-size:14px; color:#9CA3AF;}
+    input,select{width:100%; padding:8px; margin-bottom:12px; border-radius:4px; border:1px solid #374151; background:#111827; color:#F9FAFB;}
+    button{background:#4F7942; color:white; padding:10px 14px; border:none; border-radius:6px; cursor:pointer; margin-right:8px; transition: background-color 0.2s ease-in-out;}
+    button:hover{background:#5A8C4A;}
+    button.secondary{background:#4B5563;}
+    button.secondary:hover{background:#6B7280;}
+    .output{background:#1F2937; padding:16px; border-radius:8px; max-height:400px; overflow:auto; border: 1px solid #374151;}
+    .name{padding:6px 0; border-bottom:1px solid #374151;}
+    .name:last-child{border-bottom:none;}
+    .muted{color:#9CA3AF; font-size:12px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Military Operation Name Generator</h1>
+    <p class="muted">Generates fictional operation names across multiple categories.</p>
+
+    <div class="controls">
+      <label for="style">Category</label>
+      <select id="style">
+        <option value="classic">Classic (WWII / Cold War)</option>
+        <option value="modern">Modern (post-1990)</option>
+        <option value="futuristic">Futuristic (sci-fi inspired)</option>
+        <option value="naval">Naval Exercises</option>
+        <option value="defense">Defense / Humanitarian</option>
+        <option value="covert">Covert & Espionage</option>
+        <option value="cyber">Cyber Warfare</option>
+        <option value="codename">Codename (randomized)</option>
+        <option value="all">All Random (mix categories)</option>
+      </select>
+
+      <label for="count">How many names</label>
+      <input id="count" type="number" min="1" max="200" value="10" />
+
+      <button id="generate">Generate</button>
+      <button id="copy" class="secondary">Copy to clipboard</button>
+      <button id="download" class="secondary">Download .txt</button>
+    </div>
+
+    <div class="output" id="output"></div>
+  </div>
+
+  <script>
+    // --- Expanded Datasets ---
+    const CLASSIC = [
+      "Overlord","Torch","Barbarossa","Avalanche","Husky","Cobra","Market Garden","Neptune","Dragoon",
+      "Ironclad","Varsity","Cartwheel","Detachment","Iceberg","Watchtower","Flintlock","Crossbow","Sentinel",
+      "Harpoon","Roundup","Jubilee","Goodwood","Plunder","Cromwell","Uranus","Saturn","Bluecoat","Dynamo",
+      "Mincemeat","Vittles","Weserubung","Sealion","Anzio","Diadem","Shingle","Vengeance","Veritable",
+      "Pointblank","Chastise","Gomorrah","Rolling Thunder","Linebacker","Arc Light","Menu","Able Archer"
+    ];
+
+    const MODERN = [
+      "Desert","Enduring","Freedom","Infinite","Odyssey","Unified","Resolute","Trident","Shield","Storm",
+      "Falcon","Eagle","Anaconda","Atlantic","Arctic","Southern","Northern","Pacific","Guardian","Strong",
+      "Joint","Steadfast","Noble","Active","Iron","Glorious","Allied","Lightning","Defender","Patriot",
+      "Inherent","Vigilant","Persistent","Urgent","Decisive","Determined","Assured","Essential","Deliberate"
+    ];
+
+    const NOUNS = [
+      "Thunder","Dawn","Resolve","Justice","Victory","Guardian","Hammer","Spear","Storm","Sabre",
+      "Fury","Shield","Lightning","Valor","Defender","Sentinel","Phoenix","Tempest","Patriot","Strike",
+      "Hunter","Warrior","Torch","Banner","Liberty","Claw","Dragon","Sword","Wolf","Vanguard",
+      "Eagle","Raven","Falcon","Tiger","Leopard","Panther","Bastion","Anvil","Beacon","Horizon",
+      "Glory","Dominion","Unity","Hope","Front","Pillar","Rampart","Aegis","Spartan","Oath",
+      "Gauntlet","Viper","Cobra","Talon","Edge","Point","Apex","Summit","Pinnacle","Crest","Echo"
+    ];
+
+    const FUTURISTIC_PREFIX = [
+      "Stellar","Quantum","Nova","Nebula","Celestial","Omega","Hyperion","Eclipse","Orion","Pulsar",
+      "Galactic","Aether","Solaris","Xenon","Cyber","Astro","Plasma","Cosmic","Ion","Chrono",
+      "Vortex","Titan","Lunar","Axion","Cryo","Spectral","Nano","Alpha","Omega","Singularity",
+      "Helios","Void","Warp","Event Horizon","Stardust","Supernova","Dark Matter","Gravity","Wormhole"
+    ];
+
+    const NAVAL = [
+      "Sea","Ocean","Maritime","Neptune","Poseidon","Atlantic","Pacific","Coral","Harbor","Fleet",
+      "Anchor","Trident","Wave","Storm","Tide","Current","Horizon","Leviathan","Kraken","Shore",
+      "Voyager","Nautilus","Orca","Dolphin","Barracuda","Shark","Corsair","Frigate","Destroyer","Carrier",
+      "Triton","Maelstrom","Archipelago","Gale","Monsoon","Typhoon","Siren","Abyss","Depth","Reef"
+    ];
+
+    const DEFENSE = [
+      "Safe Haven","Shelter","Hope","Relief","Shield","Guardian","Rescue","Unity","Brotherhood","Peace",
+      "Mercy","Kindness","Resolve","Protector","Haven","Alliance","Aid","Support","Courage","Harmony",
+      "Charity","Refuge","Compassion","Sentinel","Justice","Solidarity","Response","Beacon","Humanity","Faith",
+      "First Light","Open Hand","Safe Passage","Helping Hand","New Dawn","Common Ground","True North"
+    ];
+
+    const COVERT_ADJECTIVE = [ "Silent", "Whispering", "Quiet", "Hidden", "Shadow", "Veiled", "Broken", "Velvet", "Iron", "Glass", "Nightfall", "Twilight" ];
+    const COVERT_NOUN = [ "Ghost", "Dagger", "Thorn", "Arrow", "Key", "Mirror", "Hand", "Path", "Orchid", "Serpent", "Umbra", "Spectre" ];
+    const CYBER_PREFIX = [ "Protocol", "Project", "Firewall", "Circuit", "Vector", "Node", "Matrix", "Mainframe", "Blackout", "Kill Switch", "Zero Day" ];
+    const CYBER_NOUN = [ "Chimera", "Hydra", "Goliath", "Anomaly", "Phantasm", "Echo", "Cascade", "Paradox", "Singularity", "Overload", "Breach" ];
+
+    const CODE_SYLLABLES = ["AX","ZQ","TR","ON","MI","LO","RA","ZE","QU","PH","KI","DA","VE","OR","UL","XY","PR","CH","GA","VO","EF","BO","JU","NY","KA","DE"];
+
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    // --- Generator Functions ---
+    const generators = {
+      classic: () => "Operation " + pick(CLASSIC),
+      modern: () => "Operation " + pick(MODERN) + " " + pick(NOUNS),
+      futuristic: () => "Operation " + pick(FUTURISTIC_PREFIX) + " " + pick(NOUNS),
+      naval: () => "Exercise " + pick(NAVAL) + " " + pick(NOUNS),
+      defense: () => "Mission " + pick(DEFENSE),
+      covert: () => (Math.random() > 0.5 ? "Operation " : "Project ") + pick(COVERT_ADJECTIVE) + " " + pick(COVERT_NOUN),
+      cyber: () => (Math.random() > 0.5 ? "Operation " : "Protocol ") + pick(CYBER_PREFIX) + " " + pick(CYBER_NOUN),
+      codename: () => "Op " + pick(CODE_SYLLABLES) + pick(CODE_SYLLABLES) + pick(CODE_SYLLABLES),
+    };
+    
+    const allCategories = Object.values(generators);
+    function randomCategory(){ return pick(allCategories)(); }
+
+    function generate(style, count){
+      const results=[];
+      const generatorFunc = generators[style] || randomCategory;
+      for(let i=0; i < count; i++){
+        results.push(generatorFunc());
+      }
+      return results;
+    }
+
+    const styleEl=document.getElementById('style');
+    const countEl=document.getElementById('count');
+    const outputEl=document.getElementById('output');
+    const generateBtn=document.getElementById('generate');
+    const copyBtn=document.getElementById('copy');
+    const downloadBtn=document.getElementById('download');
+
+    let lastResults=[];
+
+    function render(list){
+      outputEl.innerHTML='';
+      list.forEach((n,i)=>{
+        const div=document.createElement('div');
+        div.className='name';
+        div.textContent=`${i+1}. ${n}`;
+        outputEl.appendChild(div);
+      });
+      lastResults=list;
+    }
+
+    generateBtn.addEventListener('click',()=>{
+      const style=styleEl.value;
+      const count=Math.min(200,Math.max(1,parseInt(countEl.value)||10));
+      render(generate(style,count));
+    });
+
+    copyBtn.addEventListener('click',async()=>{
+      try{
+        await navigator.clipboard.writeText(lastResults.join('\n'));
+        copyBtn.textContent='Copied!';
+        setTimeout(()=>copyBtn.textContent='Copy to clipboard',1500);
+      }catch(e){alert('Copy failed.');}
+    });
+
+    downloadBtn.addEventListener('click',()=>{
+      const blob=new Blob([lastResults.join('\n')],{type:'text/plain'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='operation-names.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Initial generation on page load
+    render(generate('modern',10));
+  </script>
+</body>
+</html>
