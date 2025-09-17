@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Random Name Generator — Realistic & Fantasy</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#7c5cff;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,#061025 0%, #091427 60%); color:#e6eef6; display:flex; align-items:center; justify-content:center; padding:28px}
+    .container{width:100%; max-width:980px}
+    header{display:flex; gap:16px; align-items:center; margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid; grid-template-columns:360px 1fr; gap:18px}
+    .card{background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 20px rgba(2,6,23,0.6);}
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+    select,input[type=number],input[type=range], .row{width:100%}
+    .row{display:flex; gap:10px}
+    .controls .field{margin-bottom:12px}
+    .btn{background:linear-gradient(180deg,var(--accent),#5f47d9); border:none; color:white; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600;}
+    .btn.secondary{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted)}
+    .switch{display:inline-flex; align-items:center; gap:8px}
+    .output{max-height:56vh; overflow:auto; padding:12px; border-radius:8px; background:var(--glass); border:1px solid rgba(255,255,255,0.03)}
+    .name{padding:8px 10px; border-radius:7px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+    footer{margin-top:12px;color:var(--muted); font-size:12px}
+    .controls .inline{display:flex; gap:8px; align-items:center}
+    .muted{color:var(--muted)}
+    .flex{display:flex; gap:8px}
+    .count-badge{background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:999px; font-weight:600}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Random Name Generator</h1>
+        <p class="lead">Generate realistic (common) names or made-up fantasy names — tweak parameters and export the results.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <aside class="card controls" aria-label="controls">
+        <div class="field">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="realistic">Realistic (first + last)</option>
+            <option value="fantasy">Fantasy (syllable-based)</option>
+          </select>
+        </div>
+
+        <div id="realistic-controls">
+          <div class="field">
+            <label for="count">How many names</label>
+            <input id="count" type="number" min="1" max="200" value="10" />
+          </div>
+          <div class="field">
+            <label class="switch"><input id="middle" type="checkbox"/> Include middle initial</label>
+          </div>
+          <div class="field">
+            <label for="casing">Casing</label>
+            <select id="casing">
+              <option value="title">Title Case (John Smith)</option>
+              <option value="upper">UPPERCASE</option>
+              <option value="lower">lowercase</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="fantasy-controls" style="display:none">
+          <div class="field">
+            <label for="count-f">How many names</label>
+            <input id="count-f" type="number" min="1" max="200" value="10" />
+          </div>
+          <div class="field">
+            <label for="syllables">Syllables per name <span class="muted">(<span id="syll-value">3</span>)</span></label>
+            <input id="syllables" type="range" min="1" max="6" value="3" />
+          </div>
+          <div class="field">
+            <label class="switch"><input id="hyphen" type="checkbox"/> Allow hyphenated names</label>
+          </div>
+          <div class="field">
+            <label class="switch"><input id="capitalize" type="checkbox" checked/> Capitalize first letter</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <button id="generate" class="btn">Generate</button>
+            <button id="randomize-lists" class="btn secondary">Shuffle name lists</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="row">
+            <button id="copy" class="btn secondary">Copy to clipboard</button>
+            <button id="download" class="btn secondary">Download .txt</button>
+          </div>
+        </div>
+
+        <footer>
+          Tip: switch modes to see different controls. You can edit the internal name lists in the source for other cultures or a larger dataset.
+        </footer>
+      </aside>
+
+      <main class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <div>
+            <div class="small">Results</div>
+            <div class="count-badge" id="result-count">0</div>
+          </div>
+          <div class="small muted">Built with plain HTML/JS • No external libraries</div>
+        </div>
+
+        <div id="output" class="output" aria-live="polite"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ----- Realistic name datasets (greatly expanded) -----
+    const FIRST_NAMES = [
+      "Olivia","Liam","Emma","Noah","Ava","Oliver","Sophia","Elijah","Isabella","Lucas",
+      "Mia","Mason","Amelia","Ethan","Harper","Logan","Evelyn","James","Abigail","Aiden",
+      "Charlotte","Jackson","Emily","Sebastian","Ella","Alexander","Avery","Jacob","Sofia","Michael",
+      "Camila","Benjamin","Aria","Daniel","Scarlett","Henry","Victoria","Jackson","Luna","Samuel",
+      "Grace","David","Chloe","Joseph","Penelope","Carter","Layla","Owen","Riley","Wyatt","Zoey",
+      "John","Mary","Robert","Patricia","Jennifer","William","Elizabeth","Linda","Richard","Barbara",
+      "Charles","Susan","Thomas","Jessica","Christopher","Sarah","Matthew","Karen","Anthony","Nancy",
+      "Mark","Lisa","Donald","Betty","Steven","Margaret","Paul","Sandra","Andrew","Ashley",
+      "Joshua","Kimberly","Kevin","Emily","Brian","Donna","George","Michelle","Edward","Dorothy",
+      "Ronald","Carol","Timothy","Amanda","Jason","Melissa","Jeffrey","Deborah","Ryan","Stephanie",
+      "Jacob","Rebecca","Gary","Laura","Nicholas","Sharon","Eric","Cynthia","Jonathan","Kathleen",
+      "Stephen","Amy","Larry","Shirley","Justin","Angela","Scott","Helen","Brandon","Anna",
+      "Benjamin","Brenda","Samuel","Pamela","Gregory","Nicole","Frank","Katherine","Alexander","Samantha",
+      "Patrick","Christine","Raymond","Catherine","Jack","Virginia","Dennis","Debra","Jerry","Rachel",
+      "Tyler","Janet","Aaron","Emma","Jose","Carolyn","Adam","Maria","Henry","Heather",
+      "Nathan","Diane","Douglas","Julie","Zachary","Joyce","Peter","Evelyn","Kyle","Joan",
+      "Walter","Christina","Ethan","Kelly","Jeremy","Victoria","Harold","Lauren","Keith","Frances",
+      "Christian","Martha","Roger","Judith","Noah","Cheryl","Gerald","Megan","Carl","Andrea",
+      "Terry","Olivia","Sean","Ann","Austin","Jean","Arthur","Alice","Lawrence","Kathryn",
+      "Jesse","Gloria","Dylan","Teresa","Bryan","Doris","Joe","Sara","Jordan","Janice",
+      "Billy","Marie","Bruce","Julia","Gabriel","Judy","Logan","Grace","Albert","Denise",
+      "Willie","Amber","Alan","Marilyn","Juan","Danielle","Wayne","Beverly","Elijah","Diana",
+      "Randy","Brittany","Roy","Theresa","Vincent","Sophia","Russell","Rose","Louis","Isabella",
+      "Philip","Kayla","Bobby","Alexis","Johnny","Lori","Bradley","Florence","Wei","Mei",
+      "Kenji","Yuki","Hiroshi","Hana","Min-jun","Seo-yeon","Raj","Priya","Anil","Sunita",
+      "Fatima","Mohammed","Amina","Yusuf","Javier","Sofia","Mateo","Valentina","Alejandro","Camila",
+      "Lars","Ingrid","Olaf","Freja","Ivan","Anastasia","Dmitri","Svetlana","Luca","Giulia",
+      "Mateo","Isabella","Hans","Heidi","Klaus","Ursula","Liam","Aoife","Sean","Niamh"
+    ];
+
+    const LAST_NAMES = [
+      "Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez",
+      "Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin",
+      "Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson",
+      "Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green",
+      "Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts","Gomez",
+      "Phillips","Evans","Turner","Diaz","Parker","Cruz","Edwards","Collins","Reyes","Stewart",
+      "Morris","Morales","Murphy","Cook","Rogers","Gutierrez","Ortiz","Morgan","Cooper","Peterson",
+      "Bailey","Reed","Kelly","Howard","Ramos","Kim","Cox","Ward","Richardson","Watson","Brooks",
+      "Chavez","Wood","James","Bennet","Gray","Mendoza","Ruiz","Hughes","Price","Alvarez",
+      "Castillo","Sanders","Patel","Myers","Long","Ross","Foster","Jimenez","Powell","Jenkins",
+      "Perry","Russell","Sullivan","Bell","Coleman","Butler","Henderson","Barnes","Gonzales","Fisher",
+      "Vasquez","Simmons","Romero","Jordan","Patterson","Alexander","Hamilton","Graham","Wallace","Moreno",
+      "Chen","Li","Zhang","Liu","Wang","Yang","Huang","Zhao","Wu","Zhou",
+      "Kim","Park","Choi","Jeong","Kang","Cho","Yoon","Jang","Lim","Han",
+      "Singh","Patel","Kumar","Shah","Khan","Sharma","Gupta","Malik","Das","Kaur",
+      "Silva","Santos","Pereira","Ferreira","Oliveira","Rodrigues","Almeida","Costa","Gomes","Sousa",
+      "Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Wagner","Becker","Schulz","Hoffmann",
+      "Dubois","Martin","Bernard","Thomas","Robert","Richard","Petit","Durand","Leroy","Moreau",
+      "Rossi","Russo","Ferrari","Esposito","Bianchi","Romano","Colombo","Ricci","Marino","Greco",
+      "Nowak","Kowalski","Wiśniewski","Wójcik","Kowalczyk","Kamiński","Lewandowski","Zieliński","Szymański","Woźniak",
+      "Ivanov","Smirnov","Kuznetsov","Popov","Vasiliev","Petrov","Sokolov","Mikhailov","Fedorov","Morozov",
+      "Tanaka","Suzuki","Takahashi","Sato","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato"
+    ];
+
+    // ----- Fantasy syllables (expanded with more complex sounds) -----
+    const SYLLABLES = [
+      'an','ar','el','en','er','ia','io','ir','is','or','os','ul','un','ur','wyn','eth','al','ol','ae','ea',
+      'ka','ki','la','le','lo','mi','mo','na','ne','ni','ra','ri','ro','sa','si','so','ta','te','ti','va','ve',
+      'zyl','vor','glen','strad','thul','qor','jyn','keth','morn','fain','lith','sha','rhos','cair','bel','dal',
+      'gar','lem','fen','hark','ist','jor','kal','lim','mal','noth','om','pir','quin','roth','ser','thain','ulth',
+      'ven','wrick','xen','yorn','zane','ash','bor','cor','dran','esh','fin','gorn','hal','ish','jorn','kel',
+      'lorn','mir','nyl','orn','par','qel','ren','sol','tor','vir','wel','yis','zen','aeth','breth','cryx','dyl'
+    ];
+
+    // DOM
+    const modeEl = document.getElementById('mode');
+    const realisticControls = document.getElementById('realistic-controls');
+    const fantasyControls = document.getElementById('fantasy-controls');
+
+    const countEl = document.getElementById('count');
+    const countFEl = document.getElementById('count-f');
+    const syllEl = document.getElementById('syllables');
+    const syllVal = document.getElementById('syll-value');
+    const middleEl = document.getElementById('middle');
+    const casingEl = document.getElementById('casing');
+    const hyphenEl = document.getElementById('hyphen');
+    const capitalizeEl = document.getElementById('capitalize');
+
+    const generateBtn = document.getElementById('generate');
+    const outputEl = document.getElementById('output');
+    const copyBtn = document.getElementById('copy');
+    const downloadBtn = document.getElementById('download');
+    const resultCount = document.getElementById('result-count');
+    const randomizeBtn = document.getElementById('randomize-lists');
+
+    // Helpers
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+    function titleCase(s){ return s.split(' ').map(w=> w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' '); }
+
+    function formatName(name, casing){
+      if(casing === 'upper') return name.toUpperCase();
+      if(casing === 'lower') return name.toLowerCase();
+      return titleCase(name);
+    }
+
+    function randomMiddleInitial(){ return String.fromCharCode(65 + Math.floor(Math.random()*26)) + '.' }
+
+    // Realistic generator
+    function generateRealistic(n, includeMiddle, casing){
+      const results = [];
+      for(let i=0;i<n;i++){
+        const first = pick(FIRST_NAMES);
+        const last = pick(LAST_NAMES);
+        const middle = includeMiddle && Math.random() < 0.6 ? (' ' + randomMiddleInitial()) : '';
+        const name = `${first}${middle} ${last}`.replace(/\s+/g,' ').trim();
+        results.push(formatName(name, casing));
+      }
+      return results;
+    }
+
+    // Fantasy generator (syllable-based pronounceable names)
+    function generateFantasy(n, syllables=3, allowHyphen=true, capitalize=true){
+      const results = [];
+      for(let i=0;i<n;i++){
+        const parts = [];
+        const pieces = syllables;
+        for(let s=0;s<pieces;s++){
+          parts.push(pick(SYLLABLES));
+        }
+        let name = parts.join('');
+        if(allowHyphen && Math.random() < 0.2){
+          // sometimes make a hyphenated compound
+          const split = Math.max(1, Math.floor(pieces/2));
+          name = parts.slice(0,split).join('') + '-' + parts.slice(split).join('');
+        }
+        if(capitalize){ name = name.charAt(0).toUpperCase() + name.slice(1); }
+        results.push(name);
+      }
+      return results;
+    }
+
+    // UI actions
+    function renderList(list){
+      outputEl.innerHTML = '';
+      for(let i=0;i<list.length;i++){
+        const d = document.createElement('div'); d.className='name';
+        const left = document.createElement('div'); left.textContent = list[i];
+        const right = document.createElement('div'); right.className='small muted'; right.textContent = `#${i+1}`;
+        d.appendChild(left); d.appendChild(right);
+        outputEl.appendChild(d);
+      }
+      resultCount.textContent = list.length;
+      // scroll first result into view
+      if(list.length) outputEl.firstElementChild?.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+
+    function generateAction(){
+      const mode = modeEl.value;
+      if(mode === 'realistic'){
+        const n = Math.min(200, Math.max(1, parseInt(countEl.value) || 10));
+        const includeMiddle = middleEl.checked;
+        const casing = casingEl.value;
+        const names = generateRealistic(n, includeMiddle, casing);
+        renderList(names);
+        lastResults = names;
+      } else {
+        const n = Math.min(200, Math.max(1, parseInt(countFEl.value) || 10));
+        const syll = Math.min(6, Math.max(1, parseInt(syllEl.value)||3));
+        const hy = hyphenEl.checked;
+        const cap = capitalizeEl.checked;
+        const names = generateFantasy(n, syll, hy, cap);
+        renderList(names);
+        lastResults = names;
+      }
+    }
+
+    // Copy & download
+    let lastResults = [];
+    copyBtn.addEventListener('click', async ()=>{
+      try{
+        const txt = lastResults.join('\n');
+        await navigator.clipboard.writeText(txt);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(()=> copyBtn.textContent = 'Copy to clipboard', 1400);
+      }catch(e){
+        alert('Copy failed. You can still select the text and copy manually.');
+      }
+    });
+
+    downloadBtn.addEventListener('click', ()=>{
+      const txt = lastResults.join('\n');
+      const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'names.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    // Mode toggle
+    modeEl.addEventListener('change', ()=>{
+      if(modeEl.value === 'realistic'){
+        realisticControls.style.display = '';
+        fantasyControls.style.display = 'none';
+      } else {
+        realisticControls.style.display = 'none';
+        fantasyControls.style.display = '';
+      }
+    });
+
+    syllEl.addEventListener('input', ()=> syllVal.textContent = syllEl.value);
+
+    generateBtn.addEventListener('click', generateAction);
+
+    // Shuffle the name lists lightly to vary the distribution
+    randomizeBtn.addEventListener('click', ()=>{
+      shuffle(FIRST_NAMES); shuffle(LAST_NAMES); shuffle(SYLLABLES);
+      randomizeBtn.textContent = 'Shuffled!';
+      setTimeout(()=> randomizeBtn.textContent = 'Shuffle name lists', 900);
+    });
+
+    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } }
+
+    // keyboard: enter to generate
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') generateAction(); });
+
+    // initial generate
+    generateAction();
+
+  </script>
+</body>
+</html>
