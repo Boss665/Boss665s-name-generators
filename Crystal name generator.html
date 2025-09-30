@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Crystal Name Generator — Fantasy & Sci‑Fi</title>
+  <style>
+    :root{--bg:#071024;--card:#0b1530;--muted:#9fb0c8;--accent:#6ee7b7}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,#031028 0%, #081726 70%); color:#e6f0f8; display:flex; align-items:center; justify-content:center; padding:28px}
+    .wrap{width:100%; max-width:980px}
+    h1{margin:0 0 6px 0}
+    p.lead{margin:0 0 18px 0;color:var(--muted)}
+
+    .grid{display:grid; grid-template-columns:340px 1fr; gap:18px}
+    .card{background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 22px rgba(2,6,23,0.6)}
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+    select,input[type=number],input[type=text]{width:100%}
+    .field{margin-bottom:12px}
+    .btn{background:linear-gradient(180deg,var(--accent),#49caa0); border:none; color:#03201a; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:700}
+    .btn.secondary{background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.04)}
+    .output{max-height:58vh; overflow:auto; padding:12px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03)}
+    .name{padding:8px 10px; border-radius:7px; background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+    .muted{color:var(--muted)}
+    .controls .row{display:flex; gap:8px}
+    .tag{font-size:11px; padding:4px 8px; border-radius:999px; background:rgba(255,255,255,0.02); color:var(--muted)}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header style="margin-bottom:12px">
+      <h1>Crystal Name Generator</h1>
+      <p class="lead">Generate names for crystals, gems, shards, cores, and artifacts — choose a category and tweak options. Includes a button to download this page as a standalone HTML file.</p>
+    </header>
+
+    <div class="grid">
+      <aside class="card controls" aria-label="controls">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category">
+            <option value="fantasy">Fantasy</option>
+            <option value="scifi">Sci‑Fi</option>
+            <option value="elemental">Elemental</option>
+            <option value="geological">Geological</option>
+            <option value="mystic">Mystic / Ancient</option>
+            <option value="color">Color-Based</option>
+            <option value="cosmic">Cosmic / Celestial</option>
+            <option value="organic">Organic / Bio-Crystal</option>
+            <option value="corrupted">Corrupted / Demonic</option>
+            <option value="all">All (mix)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="count">How many names</label>
+          <input id="count" type="number" min="1" max="500" value="12" />
+        </div>
+
+        <div class="field">
+          <label class="small">Include descriptor</label>
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="descriptor" checked/> e.g. "Shard", "Core", "Crystal"</label>
+            <label class="switch"><input type="checkbox" id="rarity"/> add rarity tag</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="format">Text format</label>
+          <select id="format">
+            <option value="title">Title Case</option>
+            <option value="upper">UPPERCASE</option>
+            <option value="lower">lowercase</option>
+          </select>
+        </div>
+
+        <div class="field row">
+          <button id="generate" class="btn">Generate</button>
+          <button id="copy" class="btn secondary">Copy</button>
+        </div>
+
+        <div class="field row">
+          <button id="downloadNames" class="btn secondary">Download names (.txt)</button>
+          <button id="downloadPage" class="btn secondary">Download this page (.html)</button>
+        </div>
+
+        <footer class="muted" style="margin-top:8px">Tip: you can edit the wordlists inside the HTML to expand or change the style. This page is standalone and can be downloaded for offline use.</footer>
+      </aside>
+
+      <main class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <div>
+            <div class="small">Results</div>
+            <div class="tag" id="result-count">0</div>
+          </div>
+          <div class="small muted">Standalone • No external libs</div>
+        </div>
+
+        <div id="output" class="output" aria-live="polite"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ---- Wordlists (expanded) ----
+    const FANTASY = {
+      prefixes: ["Ael","Ith","Syl","Mir","Vor","Ely","Thal","Nyx","Kor","Fael","Rhi","Lun","Aer","Kael","Zer","Mael","Ves","Orin","Yl","Sera","Drun","Ghal","Pyr","Edr","Tess","Ner","Val","Zul","Oriel","Cael"],
+      suffixes: ["-ith","-ara","-eth","-iel","-or","-un","-ys","-ion","-ara","-aen","-yr","-os","-en","-ara","-yx","-al","-ara","-une","-oth","-eus","-ae","-el","-is","-ar","-oth"]
+    };
+    const SCIFI = {
+      cores: ["Xen","Qir","Zy","Tri","Nov","Cry","Vox","Kly","Rho","Ax","Ion","Ny","Syn","Psi","Omni","Neo","Hel","Arc","Lux","Vyr","Om","Tek","Iso","Pra","Zan","Pol"],
+      tags: ["-Prime","-IX","-7","-X","-Delta","-Omega","-Core","-Arc","-Unit","-Matrix","-Frame","-Drive","-Node","-Array","-Sigma"]
+    };
+    const ELEMENTAL = {
+      elements: ["Flame","Frost","Storm","Stone","Gale","Tide","Ember","Void","Light","Shadow","Venom","Crystal","Aether","Quake","Radiant","Obsidian","Iron","Mist","Bloom","Ash","Fury","Torrent","Gloom","Spark","Root","Steel","Glass","Echo","Pulse","Bloom"],
+      modifiers: ["-heart","-core","-shard","-gem","-vein","-stone","-lumen","-spire","-bloom","-frost","-ember"]
+    };
+    const GEOLOGICAL = {
+      bases: ["Quartz","Calcite","Dolomite","Beryl","Garnet","Topaz","Jade","Onyx","Agate","Obsidian","Moonstone","Sunstone","Pearl","Opal","Malachite","Corundum","Spinel","Azurite","Lapis","Marble","Granite","Basalt","Shale","Gneiss","Fluorite","Sulfur","Graphite","Magnetite"],
+      qualifiers: ["Cluster","Vein","Crystal","Nodule","Shard","Band","Formation","Stratum","Lens","Pocket","Crystal","Node"]
+    };
+    const MYSTIC = {
+      roots: ["Elder","Runic","Ancient","Sigil","Wyrd","Oracle","Seer","Astra","Rune","Eon","Chrono","Hex","Ethereal","Umbral","Divine","Sacred","Occult","Primordial","Grimoire","Lumen","Aurum","Noct","Celest"],
+      endings: ["stone","glyph","shard","vein","matrix","icon","mirror","seal","core","amulet","lens","keystone"]
+    };
+    const COLOR = {
+      colors: ["Azure","Crimson","Viridian","Obsidian","Ivory","Amethyst","Saffron","Verdant","Cerulean","Indigo","Amber","Scarlet","Emerald","Cobalt","Magenta","Pearl","Onyx","Jade","Ochre","Sepia","Rose","Violet","Sable","Azure","Lapis","Opal","Garnet","Topaz"],
+      finishes: ["Glow","Iridescence","Sheen","Lustre","Shimmer","Spark","Veil","Flare","Gleam","Pulse"]
+    };
+    // --- NEW DATASETS ---
+    const COSMIC = {
+        prefixes: ["Star","Comet","Nova","Void","Solar","Lunar","Nebula","Cosmic","Quasar","Pulsar","Astro"],
+        suffixes: ["dust","fall","flare","core","fragment","tear","opal","bloom","shiver","gleam","song"]
+    };
+    const ORGANIC = {
+        bases: ["Spore","Root","Bone","Heart","Hive","Cell","Blood","Spine","Wyrm","Vitae","Amber"],
+        qualifiers: ["bloom","shard","growth","resin","cluster","seed","heart","vein","fossil","marrow"]
+    };
+    const CORRUPTED = {
+        prefixes: ["Fel","Blight","Dread","Soul","Vex","Wraith","Gloom","Nether","Vile","Sin"],
+        suffixes: ["stone","shard","tear","core","fragment","ember","splinter","heart","fire","cry"]
+    };
+
+    const DESCRIPTORS = ["Shard","Crystal","Core","Gem","Stone","Facet","Prism","Cluster","Heart","Node","Lode","Nucleus","Resin","Vial","Phylactery","Chip","Bead","Ingot","Shardlet","Sliver"];
+    const RARITY = ["Common","Uncommon","Rare","Epic","Legendary","Mythic","Exotic","Fabled","Unique"];
+
+    // Helpers
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function titleCase(s){ return s.split(' ').map(w=> w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' '); }
+    function formatText(s, mode){ if(mode==='upper') return s.toUpperCase(); if(mode==='lower') return s.toLowerCase(); return titleCase(s); }
+
+    // Generators per category
+    function genFantasy(){ const p = pick(FANTASY.prefixes); const s = pick(FANTASY.suffixes); if(Math.random() < 0.18) return p + s + ' ' + pick(DESCRIPTORS); return p + s; }
+    function genSciFi(){ const core = pick(SCIFI.cores); const tag = Math.random() < 0.65 ? pick(SCIFI.tags) : ''; if(Math.random() < 0.5) return core + tag; return core + '-' + (tag.replace(/^-/,'')); }
+    function genElemental(){ const el = pick(ELEMENTAL.elements); const mod = pick(ELEMENTAL.modifiers); if(Math.random() < 0.25) return el + ' ' + pick(DESCRIPTORS); return el + mod; }
+    function genGeological(){ return pick(GEOLOGICAL.bases) + ' ' + pick(GEOLOGICAL.qualifiers); }
+    function genMystic(){ return pick(MYSTIC.roots) + ' ' + pick(MYSTIC.endings); }
+    function genColor(){ return pick(COLOR.colors) + ' ' + pick(COLOR.finishes); }
+    // --- NEW GENERATORS ---
+    function genCosmic(){ return pick(COSMIC.prefixes) + (Math.random() < 0.5 ? "" : "-") + pick(COSMIC.suffixes); }
+    function genOrganic(){ return pick(ORGANIC.bases) + (Math.random() < 0.5 ? " " : "-") + pick(ORGANIC.qualifiers); }
+    function genCorrupted(){ return pick(CORRUPTED.prefixes) + (Math.random() < 0.5 ? " " : "-") + pick(CORRUPTED.suffixes); }
+
+    function genMixed(){
+      const gens = [genFantasy, genSciFi, genElemental, genGeological, genMystic, genColor, genCosmic, genOrganic, genCorrupted];
+      return pick(gens)();
+    }
+
+    // Main: create names
+    function buildName(category){
+      if(category==='fantasy') return genFantasy();
+      if(category==='scifi') return genSciFi();
+      if(category==='elemental') return genElemental();
+      if(category==='geological') return genGeological();
+      if(category==='mystic') return genMystic();
+      if(category==='color') return genColor();
+      if(category==='cosmic') return genCosmic();
+      if(category==='organic') return genOrganic();
+      if(category==='corrupted') return genCorrupted();
+      return genMixed();
+    }
+
+    // UI
+    const categoryEl = document.getElementById('category');
+    const countEl = document.getElementById('count');
+    const descriptorEl = document.getElementById('descriptor');
+    const rarityEl = document.getElementById('rarity');
+    const formatEl = document.getElementById('format');
+    const generateBtn = document.getElementById('generate');
+    const outputEl = document.getElementById('output');
+    const resultCount = document.getElementById('result-count');
+    const copyBtn = document.getElementById('copy');
+    const downloadNamesBtn = document.getElementById('downloadNames');
+    const downloadPageBtn = document.getElementById('downloadPage');
+
+    let lastResults = [];
+
+    function assemble(){
+      const category = categoryEl.value;
+      const count = Math.min(500, Math.max(1, parseInt(countEl.value)||12));
+      const useDesc = descriptorEl.checked;
+      const useRarity = rarityEl.checked;
+      const fmt = formatEl.value;
+      const res = [];
+      for(let i=0;i<count;i++){
+        let base = buildName(category);
+        if(useDesc && Math.random() < 0.75){
+          const d = pick(DESCRIPTORS);
+          if(!new RegExp(d,'i').test(base)) base = base + ' ' + d;
+        }
+        if(useRarity && Math.random() < 0.28){ base = base + ' [' + pick(RARITY) + ']'; }
+        res.push(formatText(base, fmt));
+      }
+      lastResults = res;
+      render(res);
+    }
+
+    function render(list){
+      outputEl.innerHTML = '';
+      list.forEach((name,i)=>{
+        const d = document.createElement('div'); d.className='name';
+        const left = document.createElement('div'); left.textContent = name;
+        const right = document.createElement('div'); right.className='small muted'; right.textContent = `#${i+1}`;
+        d.appendChild(left); d.appendChild(right);
+        outputEl.appendChild(d);
+      });
+      resultCount.textContent = list.length;
+      outputEl.scrollTop = 0;
+    }
+
+    generateBtn.addEventListener('click', assemble);
+    copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(lastResults.join('\n')); copyBtn.textContent='Copied!'; setTimeout(()=>copyBtn.textContent='Copy',1200);}catch(e){alert('Copy failed.');} });
+    downloadNamesBtn.addEventListener('click', ()=>{ const blob = new Blob([lastResults.join('\n')], {type:'text/plain'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'crystal-names.txt'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+    downloadPageBtn.addEventListener('click', ()=>{ const html = '<!doctype html>\n' + document.documentElement.outerHTML; const blob = new Blob([html], {type: 'text/html'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'crystal-name-generator.html'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); });
+
+    // generate initial
+    assemble();
+  </script>
+</body>
+</html>
