@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ultimate Name Generator</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#7c5cff;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; margin:0; min-height:100vh; background:linear-gradient(180deg,#061025 0%, #091427 60%); color:#e6eef6; display:flex; align-items:center; justify-content:center; padding:28px}
+    .container{width:100%; max-width:980px}
+    header{margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid; grid-template-columns:360px 1fr; gap:18px}
+    .card{background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 20px rgba(2,6,23,0.6);}
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+    select,input[type=number],input[type=range]{width:100%}
+    .row{display:flex; gap:10px; width:100%;}
+    .controls .field{margin-bottom:12px}
+    .btn{width:100%; background:linear-gradient(180deg,var(--accent),#5f47d9); border:none; color:white; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:600; text-align:center;}
+    .btn.secondary{background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--muted)}
+    .switch{display:inline-flex; align-items:center; gap:8px; font-size: 13px;}
+    .output{min-height: 400px; max-height:60vh; overflow:auto; padding:12px; border-radius:8px; background:var(--glass); border:1px solid rgba(255,255,255,0.03)}
+    .name{padding:8px 10px; border-radius:7px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center}
+    .small{font-size:12px;color:var(--muted)}
+    .count-badge{background:rgba(255,255,255,0.03); padding:4px 8px; border-radius:999px; font-weight:600}
+    .control-panel{border-top: 1px solid var(--glass); margin-top: 16px; padding-top: 16px;}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>The Ultimate Name Generator</h1>
+      <p class="lead">A unified tool for generating realistic, fantasy, sci-fi, and military-themed names.</p>
+    </header>
+
+    <div class="grid">
+      <aside class="card controls" aria-label="controls">
+        <div class="field">
+          <label for="type">Master Category</label>
+          <select id="type">
+            <optgroup label="Characters & People">
+              <option value="realistic">Realistic Name</option>
+              <option value="fantasy">Fantasy Name</option>
+            </optgroup>
+            <optgroup label="Sci-Fi World-Building">
+              <option value="planet" selected>Planet / Moon</option>
+              <option value="system">Star System</option>
+              <option value="starship">Starship / Vessel</option>
+            </optgroup>
+            <optgroup label="Fantasy World-Building">
+              <option value="city">City / Settlement</option>
+              <option value="area">Continent / Region</option>
+              <option value="faction">Faction / Organization</option>
+            </optgroup>
+            <optgroup label="Military Operations">
+              <option value="modern_ops">Modern Operation</option>
+              <option value="classic_ops">Classic Operation (WWII)</option>
+              <option value="futuristic_ops">Futuristic Operation</option>
+              <option value="naval_ops">Naval Exercise</option>
+              <option value="defense_ops">Defense / Humanitarian</option>
+              <option value="covert_ops">Covert Operation</option>
+              <option value="cyber_ops">Cyber Operation</option>
+              <option value="codename">Random Codename</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label for="count">How many names to generate</label>
+          <input id="count" type="number" min="1" max="200" value="10" />
+        </div>
+        
+        <div id="realistic-controls" class="control-panel" style="display:none;">
+          <div class="field">
+            <label class="switch"><input id="middle" type="checkbox"/> Include middle initial</label>
+          </div>
+          <div class="field">
+            <label for="casing">Casing</label>
+            <select id="casing">
+              <option value="title">Title Case (John Smith)</option>
+              <option value="upper">UPPERCASE</option>
+              <option value="lower">lowercase</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="fantasy-controls" class="control-panel" style="display:none;">
+          <div class="field">
+            <label for="syllables">Syllables per name (<span id="syll-value">3</span>)</label>
+            <input id="syllables" type="range" min="1" max="6" value="3" />
+          </div>
+          <div class="field">
+            <label class="switch"><input id="hyphen" type="checkbox"/> Allow hyphenated names</label>
+          </div>
+          <div class="field">
+            <label class="switch"><input id="capitalize" type="checkbox" checked/> Capitalize first letter</label>
+          </div>
+        </div>
+        
+        <div class="field" style="margin-top: 20px;">
+            <button id="generate" class="btn">Generate Names</button>
+        </div>
+        <div class="field">
+          <div class="row">
+            <button id="copy" class="btn secondary">Copy to clipboard</button>
+            <button id="download" class="btn secondary">Download .txt</button>
+          </div>
+        </div>
+      </aside>
+
+      <main class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+          <div class="count-badge" id="result-count">0 results</div>
+          <div class="small">Generated by The Ultimate Name Generator</div>
+        </div>
+        <div id="output" class="output" aria-live="polite"></div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // ----- DATASETS (COMBINED & EXPANDED) -----
+    
+    // --- REALISTIC & FANTASY DATA ---
+    const FIRST_NAMES = ["Olivia","Liam","Emma","Noah","Ava","Oliver","Sophia","Elijah","Isabella","Lucas","Mia","Mason","Amelia","Ethan","Harper","Logan","Evelyn","James","Abigail","Aiden","Charlotte","Jackson","Emily","Sebastian","Ella","Alexander","Avery","Jacob","Sofia","Michael","Camila","Benjamin","Aria","Daniel","Scarlett","Henry","Victoria","Luna","Samuel","Grace","David","Chloe","Joseph","Penelope","Carter","Layla","Owen","Riley","Wyatt","Zoey","John","Mary","Robert","Patricia","Jennifer","William","Elizabeth","Linda","Richard","Barbara","Charles","Susan","Thomas","Jessica","Christopher","Sarah","Matthew","Karen","Anthony","Nancy","Mark","Lisa","Donald","Betty","Steven","Margaret","Paul","Sandra","Andrew","Ashley","Joshua","Kimberly","Kevin","Brian","Donna","George","Michelle","Edward","Dorothy","Ronald","Carol","Timothy","Amanda","Jason","Melissa","Jeffrey","Deborah","Ryan","Stephanie","Rebecca","Gary","Laura","Nicholas","Sharon","Eric","Cynthia","Jonathan","Kathleen","Stephen","Amy","Larry","Shirley","Justin","Angela","Scott","Helen","Brandon","Anna","Brenda","Samuel","Pamela","Gregory","Nicole","Frank","Katherine","Alexander","Samantha","Patrick","Christine","Raymond","Catherine","Jack","Virginia","Dennis","Debra","Jerry","Rachel","Tyler","Janet","Aaron","Jose","Adam","Maria","Henry","Heather","Nathan","Diane","Douglas","Julie","Zachary","Joyce","Peter","Kyle","Joan","Walter","Christina","Jeremy","Victoria","Harold","Lauren","Keith","Frances","Christian","Martha","Roger","Judith","Noah","Cheryl","Gerald","Megan","Carl","Andrea","Terry","Sean","Ann","Austin","Jean","Arthur","Alice","Lawrence","Kathryn","Jesse","Gloria","Dylan","Teresa","Bryan","Joe","Jordan","Janice","Billy","Marie","Bruce","Julia","Judy","Gabriel","Denise","Willie","Amber","Alan","Marilyn","Juan","Danielle","Wayne","Beverly","Elijah","Diana","Randy","Brittany","Roy","Theresa","Vincent","Russell","Rose","Louis","Philip","Kayla","Bobby","Alexis","Johnny","Lori","Bradley","Florence","Wei","Mei","Kenji","Yuki","Hiroshi","Hana","Min-jun","Seo-yeon","Raj","Priya","Anil","Sunita","Fatima","Mohammed","Amina","Yusuf","Javier","Mateo","Valentina","Alejandro","Lars","Ingrid","Olaf","Freja","Ivan","Anastasia","Dmitri","Svetlana","Luca","Giulia","Hans","Heidi","Klaus","Ursula","Aoife","Niamh"];
+    const LAST_NAMES = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts","Gomez","Phillips","Evans","Turner","Diaz","Parker","Cruz","Edwards","Collins","Reyes","Stewart","Morris","Morales","Murphy","Cook","Rogers","Gutierrez","Ortiz","Morgan","Cooper","Peterson","Bailey","Reed","Kelly","Howard","Ramos","Kim","Cox","Ward","Richardson","Watson","Brooks","Chavez","Wood","James","Bennet","Gray","Mendoza","Ruiz","Hughes","Price","Alvarez","Castillo","Sanders","Patel","Myers","Long","Ross","Foster","Jimenez","Powell","Jenkins","Perry","Russell","Sullivan","Bell","Coleman","Butler","Henderson","Barnes","Gonzales","Fisher","Vasquez","Simmons","Romero","Jordan","Patterson","Alexander","Hamilton","Graham","Wallace","Moreno","Chen","Li","Zhang","Liu","Wang","Yang","Huang","Zhao","Wu","Zhou","Park","Choi","Jeong","Kang","Cho","Yoon","Jang","Lim","Han","Singh","Kumar","Shah","Khan","Sharma","Gupta","Malik","Das","Kaur","Silva","Santos","Pereira","Ferreira","Oliveira","Rodrigues","Almeida","Costa","Gomes","Sousa","Müller","Schmidt","Schneider","Fischer","Weber","Meyer","Wagner","Becker","Schulz","Hoffmann","Dubois","Bernard","Robert","Richard","Petit","Durand","Leroy","Rossi","Russo","Ferrari","Esposito","Bianchi","Romano","Colombo","Ricci","Marino","Greco","Nowak","Kowalski","Wiśniewski","Wójcik","Kowalczyk","Kamiński","Lewandowski","Zieliński","Szymański","Woźniak","Ivanov","Smirnov","Kuznetsov","Popov","Vasiliev","Petrov","Sokolov","Mikhailov","Fedorov","Morozov","Tanaka","Suzuki","Takahashi","Sato","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato"];
+    const FANTASY_SYLLABLES = ['an','ar','el','en','er','ia','io','ir','is','or','os','ul','un','ur','wyn','eth','al','ol','ae','ea','ka','ki','la','le','lo','mi','mo','na','ne','ni','ra','ri','ro','sa','si','so','ta','te','ti','va','ve','zyl','vor','glen','strad','thul','qor','jyn','keth','morn','fain','lith','sha','rhos','cair','bel','dal','gar','lem','fen','hark','ist','jor','kal','lim','mal','noth','om','pir','quin','roth','ser','thain','ulth','ven','wrick','xen','yorn','zane','ash','bor','cor','dran','esh','fin','gorn','hal','ish','jorn','kel','lorn','mir','nyl','orn','par','qel','ren','sol','tor','vir','wel','yis','zen','aeth','breth','cryx','dyl'];
+
+    // --- SCI-FI DATA ---
+    const PLANET_PREFIXES = ["Astra","Nova","Zyra","Vel","Altair","Orion","Epsilon","Lyra","Vega","Cygnus","Draco","Seren","Kryos","Nebula","Arkan","Phobos","Solara","Quorra","Lunaris","Cetus","Xandar","Galatea","Polaris","Rhea","Titan","Umbra","Nyx","Hyperion","Zephra","Oblivion","Kaelor","Myrrh","Thanis","Vor","Acheron","Aurelia","Cryon","Xerra","Demeris","Jovian","Eryndor","Thalassa","Krynn","Altan","Orbis","Caelum","Noctis","Zerath","Pyrrha","Selene","Veridia","Krypton","Solitude","Seraph","Genesis","Exodus","Elysium","Terminus","Aethel","Vesper","Helios","Pulsar","Quasar","Rigel","Deneb","Fomalhaut","Eridanus","Kepler","Gliese","Trappist","Corvus","Pegasus","Andromeda","Cassiopeia","Centauri","Proxima","Sol","Terra","Mars","Jupiter","Saturnus","Neptunus","Uranus","Pluto","Charon","Styx","Kerberos","Nix","Hydra","Eris","Asgard","Vormir","Hoth","Tatooine"];
+    const PLANET_SUFFIXES = ["-ia","-on","-ara","-ora","-us","-ar","-ium","-ea","-or","-eth","-arae","-ara Prime","-is","-ara Major","-ara Minor","-ae","-eron","-exis","-ara IX","-ora VII","-ion","-yra","-ara Nova","-ios","-ora Prime","-ara Ultima","-ara Secundus","-axis","-yros","-ara IV","-eos","-ara Beta","-ora Delta","-ara Omega","-ora Alpha","-ara Sigma","-is IV","-or Prime","-ara Prime II","-oth","-yss","-ara Centauri","-ara Borealis","-ara Australis","-ara Nebula","-ara Zenith","-ara Solis","-ora Inferna","-ara Polaris","-ara Astralis","-gard","-ides","-os","-ys","-us Prime","-us Minor","-is Major","-is Secundus","-ix","-heim","-ia Proxima","-ia Ultima","-os IV","-os IX","-eth Major","-eth Minor","-ara Tertius","-is VI","-es","-et"];
+    const STARSHIP_PREFIXES = ["SSV", "INV", "FNS", "GCS", "RNS", "ACS", "HMS", "ISS", "UNSC", "USG"];
+    const STARSHIP_NAMES = ["Odyssey", "Vengeance", "Stardust", "Leviathan", "Horizon", "Andromeda", "Pathfinder", "Retribution", "Normandy", "Hyperion", "Tempest", "Sovereign", "Pillar of Autumn", "Aegis", "Prometheus", "Dauntless"];
+
+    // --- FANTASY WORLD-BUILDING DATA ---
+    const AREA_PREFIXES = ["Nor","Zan","Ver","Kael","Thal","Mir","Xen","Orr","Dru","Cind","Ral","Fen","Cor","Bran","Tyr","Quen","Vor","Nym","Sil","Pyr","Mar","Zen","Lyr","Cairn","Ael","Dorn","Syra","Elth","Jor","Myth","Kyr","Tor","Vorn","Eld","Fey","Grav","Lun","Cry","Val","Orrin","Thera","Ulth","Ost","Khar","Vey","Dros","Sarn","Wyr","Ery","Bryn","Grim","Ash","Storm","Sun","Iron","Whisper","Shadow","Gloom","Star","River","Stone","Cloud","Mist","Frost","Fire","Blood","Silver","Golden","Bronze","Ember","Hallow","Dragon","Wolf","Bear","Eagle","Serpent","Spider","Grave","Rune","Soul"];
+    const AREA_SUFFIXES = ["land","dor","mere","fell","vale","reach","heim","moor","crest","fjord","hold","hollow","spire","wilds","plains","marsh","waste","crag","barrens","hills","steppe","desert","forest","woods","grove","delta","shores","cove","isle","archipelago","expanse","belt","depths","basin","rift","canyon","cliffs","peaks","glades","savanna","plateau","dunes","fen","swamp","bog","highlands","lowlands","gulch","ridge","fields","glade","valley","pass","mire","tundra","coast","wood","gard","mark","bluff","break","run","crossing","watch","grave","burn","fall","ascent","descent","peak"];
+    const CITY_PREFIXES = ["Port", "Fort", "Star", "Iron", "Silver", "New", "North", "South", "East", "West", "Mount"];
+    const CITY_SUFFIXES = ["haven", "fall", "crest", "mire", "gard", "bridge", "port", "view", "burg", "town", "point", "landing"];
+    const FACTION_PART1 = ["The Obsidian", "The Crimson", "Stellar", "Aegis", "Cyberion", "The Solar", "Galactic", "Orion", "The Forgotten", "Iron", "Golden"];
+    const FACTION_PART2 = ["Covenant", "Syndicate", "Dynamics", "Legion", "Cartel", "Dominion", "Empire", "Alliance", "Collective", "Sons", "Circle", "Order"];
+
+    // --- MILITARY OPS DATA ---
+    const OPS_CLASSIC = ["Overlord","Torch","Barbarossa","Avalanche","Husky","Cobra","Market Garden","Neptune","Dragoon","Ironclad","Varsity","Cartwheel","Detachment","Iceberg","Watchtower","Flintlock","Crossbow","Sentinel","Harpoon","Roundup","Jubilee","Goodwood","Plunder","Cromwell","Uranus","Saturn","Bluecoat","Dynamo","Mincemeat","Vittles","Weserubung","Sealion","Anzio","Diadem","Shingle","Vengeance","Veritable","Pointblank","Chastise","Gomorrah","Rolling Thunder","Linebacker","Arc Light","Menu","Able Archer"];
+    const OPS_MODERN = ["Desert","Enduring","Freedom","Infinite","Odyssey","Unified","Resolute","Trident","Shield","Storm","Falcon","Eagle","Anaconda","Atlantic","Arctic","Southern","Northern","Pacific","Guardian","Strong","Joint","Steadfast","Noble","Active","Iron","Glorious","Allied","Lightning","Defender","Patriot","Inherent","Vigilant","Persistent","Urgent","Decisive","Determined","Assured","Essential","Deliberate"];
+    const OPS_NOUNS = ["Thunder","Dawn","Resolve","Justice","Victory","Guardian","Hammer","Spear","Storm","Sabre","Fury","Shield","Lightning","Valor","Defender","Sentinel","Phoenix","Tempest","Patriot","Strike","Hunter","Warrior","Torch","Banner","Liberty","Claw","Dragon","Sword","Wolf","Vanguard","Eagle","Raven","Falcon","Tiger","Leopard","Panther","Bastion","Anvil","Beacon","Horizon","Glory","Dominion","Unity","Hope","Front","Pillar","Rampart","Aegis","Spartan","Oath","Gauntlet","Viper","Cobra","Talon","Edge","Point","Apex","Summit","Pinnacle","Crest","Echo"];
+    const OPS_FUTURISTIC = ["Stellar","Quantum","Nova","Nebula","Celestial","Omega","Hyperion","Eclipse","Orion","Pulsar","Galactic","Aether","Solaris","Xenon","Cyber","Astro","Plasma","Cosmic","Ion","Chrono","Vortex","Titan","Lunar","Axion","Cryo","Spectral","Nano","Alpha","Singularity","Helios","Void","Warp","Event Horizon","Stardust","Supernova","Dark Matter","Gravity","Wormhole"];
+    const OPS_NAVAL = ["Sea","Ocean","Maritime","Neptune","Poseidon","Atlantic","Pacific","Coral","Harbor","Fleet","Anchor","Trident","Wave","Storm","Tide","Current","Horizon","Leviathan","Kraken","Shore","Voyager","Nautilus","Orca","Dolphin","Barracuda","Shark","Corsair","Frigate","Destroyer","Carrier","Triton","Maelstrom","Archipelago","Gale","Monsoon","Typhoon","Siren","Abyss","Depth","Reef"];
+    const OPS_DEFENSE = ["Safe Haven","Shelter","Hope","Relief","Shield","Guardian","Rescue","Unity","Brotherhood","Peace","Mercy","Kindness","Resolve","Protector","Haven","Alliance","Aid","Support","Courage","Harmony","Charity","Refuge","Compassion","Sentinel","Justice","Solidarity","Response","Beacon","Humanity","Faith","First Light","Open Hand","Safe Passage","Helping Hand","New Dawn","Common Ground","True North"];
+    const OPS_COVERT_ADJ = ["Silent", "Whispering", "Quiet", "Hidden", "Shadow", "Veiled", "Broken", "Velvet", "Iron", "Glass", "Nightfall", "Twilight"];
+    const OPS_COVERT_NOUN = ["Ghost", "Dagger", "Thorn", "Arrow", "Key", "Mirror", "Hand", "Path", "Orchid", "Serpent", "Umbra", "Spectre"];
+    const OPS_CYBER_PREFIX = ["Protocol", "Project", "Firewall", "Circuit", "Vector", "Node", "Matrix", "Mainframe", "Blackout", "Kill Switch", "Zero Day"];
+    const OPS_CYBER_NOUN = ["Chimera", "Hydra", "Goliath", "Anomaly", "Phantasm", "Echo", "Cascade", "Paradox", "Singularity", "Overload", "Breach"];
+    const OPS_CODE_SYLLABLES = ["AX","ZQ","TR","ON","MI","LO","RA","ZE","QU","PH","KI","DA","VE","OR","UL","XY","PR","CH","GA","VO","EF","BO","JU","NY","KA","DE"];
+
+    // ----- DOM ELEMENTS -----
+    const typeEl = document.getElementById('type');
+    const countEl = document.getElementById('count');
+    const outputEl = document.getElementById('output');
+    const generateBtn = document.getElementById('generate');
+    const copyBtn = document.getElementById('copy');
+    const downloadBtn = document.getElementById('download');
+    const resultCount = document.getElementById('result-count');
+    // Dynamic Control Panels
+    const realisticControls = document.getElementById('realistic-controls');
+    const fantasyControls = document.getElementById('fantasy-controls');
+    // Realistic Controls
+    const middleEl = document.getElementById('middle');
+    const casingEl = document.getElementById('casing');
+    // Fantasy Controls
+    const syllEl = document.getElementById('syllables');
+    const syllVal = document.getElementById('syll-value');
+    const hyphenEl = document.getElementById('hyphen');
+    const capitalizeEl = document.getElementById('capitalize');
+
+    // ----- HELPERS -----
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function titleCase(s){ return s.split(' ').map(w=> w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' '); }
+    function randomMiddleInitial(){ return String.fromCharCode(65 + Math.floor(Math.random()*26)) + '.'; }
+    
+    // ----- GENERATOR FUNCTIONS MAP -----
+    const generators = {
+        realistic: () => {
+            const first = pick(FIRST_NAMES);
+            const last = pick(LAST_NAMES);
+            const middle = middleEl.checked && Math.random() < 0.6 ? (' ' + randomMiddleInitial()) : '';
+            const name = `${first}${middle} ${last}`.replace(/\s+/g,' ').trim();
+            const casing = casingEl.value;
+            if (casing === 'upper') return name.toUpperCase();
+            if (casing === 'lower') return name.toLowerCase();
+            return titleCase(name);
+        },
+        fantasy: () => {
+            const numSyllables = parseInt(syllEl.value) || 3;
+            const parts = Array.from({ length: numSyllables }, () => pick(FANTASY_SYLLABLES));
+            let name = parts.join('');
+            if (hyphenEl.checked && Math.random() < 0.2 && numSyllables > 1) {
+                const split = Math.max(1, Math.floor(numSyllables / 2));
+                name = parts.slice(0, split).join('') + '-' + parts.slice(split).join('');
+            }
+            return capitalizeEl.checked ? name.charAt(0).toUpperCase() + name.slice(1) : name;
+        },
+        planet: () => pick(PLANET_PREFIXES) + pick(PLANET_SUFFIXES),
+        system: () => pick(PLANET_PREFIXES) + pick(PLANET_SUFFIXES),
+        starship: () => pick(STARSHIP_PREFIXES) + " " + pick(STARSHIP_NAMES),
+        city: () => pick(CITY_PREFIXES) + pick(CITY_SUFFIXES),
+        area: () => pick(AREA_PREFIXES) + pick(AREA_SUFFIXES),
+        faction: () => pick(FACTION_PART1) + " " + pick(FACTION_PART2),
+        modern_ops: () => "Operation " + pick(OPS_MODERN) + " " + pick(OPS_NOUNS),
+        classic_ops: () => "Operation " + pick(OPS_CLASSIC),
+        futuristic_ops: () => "Operation " + pick(OPS_FUTURISTIC) + " " + pick(OPS_NOUNS),
+        naval_ops: () => "Exercise " + pick(OPS_NAVAL) + " " + pick(OPS_NOUNS),
+        defense_ops: () => "Mission " + pick(OPS_DEFENSE),
+        covert_ops: () => (Math.random() > 0.5 ? "Operation " : "Project ") + pick(OPS_COVERT_ADJ) + " " + pick(OPS_COVERT_NOUN),
+        cyber_ops: () => (Math.random() > 0.5 ? "Operation " : "Protocol ") + pick(OPS_CYBER_PREFIX) + " " + pick(OPS_CYBER_NOUN),
+        codename: () => "Op " + pick(OPS_CODE_SYLLABLES) + pick(OPS_CODE_SYLLABLES) + pick(OPS_CODE_SYLLABLES)
+    };
+
+    // ----- UI ACTIONS -----
+    let lastResults = [];
+    function renderList(list){
+      outputEl.innerHTML = '';
+      list.forEach((item, i) => {
+        const d = document.createElement('div'); d.className='name';
+        const left = document.createElement('div'); left.textContent = item;
+        const right = document.createElement('div'); right.className='small'; right.textContent = `#${i+1}`;
+        d.appendChild(left); d.appendChild(right);
+        outputEl.appendChild(d);
+      });
+      resultCount.textContent = `${list.length} result${list.length === 1 ? '' : 's'}`;
+      lastResults = list;
+    }
+
+    function generateAction(){
+      const type = typeEl.value;
+      const count = Math.min(200, Math.max(1, parseInt(countEl.value) || 10));
+      const generatorFunc = generators[type];
+      if(!generatorFunc) return;
+      
+      const names = Array.from({ length: count }, generatorFunc);
+      renderList(names);
+    }
+    
+    function updateControlPanels() {
+        const type = typeEl.value;
+        realisticControls.style.display = type === 'realistic' ? 'block' : 'none';
+        fantasyControls.style.display = type === 'fantasy' ? 'block' : 'none';
+    }
+
+    // ----- EVENT LISTENERS -----
+    generateBtn.addEventListener('click', generateAction);
+    typeEl.addEventListener('change', updateControlPanels);
+    syllEl.addEventListener('input', () => syllVal.textContent = syllEl.value);
+
+    copyBtn.addEventListener('click', async () => {
+      if(!lastResults.length) return;
+      try{
+        await navigator.clipboard.writeText(lastResults.join('\n'));
+        copyBtn.textContent = 'Copied!';
+        setTimeout(()=> copyBtn.textContent = 'Copy to clipboard', 1500);
+      }catch(e){ alert('Copy failed.'); }
+    });
+
+    downloadBtn.addEventListener('click', () => {
+      if(!lastResults.length) return;
+      const blob = new Blob([lastResults.join('\n')], {type:'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'generated-names.txt';
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'SELECT'){
+            generateAction();
+        }
+    });
+
+    // Initial setup
+    updateControlPanels();
+    generateAction();
+  </script>
+</body>
+</html>
