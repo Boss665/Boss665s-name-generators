@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Star System Generator</title>
+<style>
+  /* --- Basic Setup --- */
+  body {
+    background: radial-gradient(circle at center, #000010, #000000);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    overflow: hidden;
+  }
+
+  /* --- Layout (Sidebar + Map) --- */
+  #app-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #controls {
+    width: 240px;
+    height: 100vh;
+    background: #1a2a3a; /* Dark teal/blue from image */
+    padding: 20px;
+    box-sizing: border-box; /* Include padding in width */
+    overflow-y: auto;
+    z-index: 10;
+    text-align: left; /* Align sidebar content left */
+  }
+
+  svg {
+    flex: 1; /* Map takes remaining space */
+    height: 100vh;
+    cursor: grab;
+    /* --- NEW: Clearer Rendering --- */
+    shape-rendering: geometricPrecision;
+  }
+  
+  /* --- Sidebar Content Styling --- */
+  #controls h1 {
+    font-size: 1.25rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+
+  #controls label {
+    display: block;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 5px;
+  }
+
+  #controls input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    background: #2a3a4a;
+    border: 1px solid #445;
+    color: white;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  #controls .instructions {
+    font-size: 0.8rem;
+    color: #8a9aaa;
+    margin-top: 20px;
+    line-height: 1.4;
+  }
+  
+  /* --- Button Styling (to match image) --- */
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px; /* Stack buttons */
+    border-radius: 6px;
+    border: none;
+    background: #e6a800; /* Yellow/orange from image */
+    color: #1a2a3a; /* Dark text for contrast */
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+  }
+
+  button:hover {
+    background: #ffd966; /* Lighter hover */
+  }
+  
+  /* --- SVG Text Styling --- */
+  text {
+    font-size: 10px;
+    fill: #ccc;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* --- NEW: Clearer Rendering --- */
+    text-rendering: geometricPrecision;
+  }
+</style>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <div id="controls">
+      <h1>Star System Generator</h1>
+      
+      <label for="seedInput">Seed</label>
+      <input id="seedInput" placeholder="Enter seed" />
+      
+      <button onclick="generate()">Generate</button>
+      <button onclick="randomSeed()">Random Seed</button>
+      <button onclick="toggleLabels()">Toggle Labels</button>
+      
+      <p class="instructions">Drag to pan, scroll to zoom. Same seed = same system.</p>
+    </div>
+    
+    <svg id="map" viewBox="-500 -500 1000 1000"></svg>
+  
+  </div>
+
+<script>
+// ===================================================================
+// START: NEW PAN & ZOOM VARIABLES
+// ===================================================================
+
+const svg = document.getElementById('map');
+// This object will hold the state of our viewBox
+let viewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+let isPanning = false;
+let startPoint = { x: 0, y: 0 };
+
+// ===================================================================
+// END: NEW PAN & ZOOM VARIABLES
+// ===================================================================
+
+
+// ===================================================================
+// START: COLLISION LOGIC (Unchanged)
+// ===================================================================
+let placedObjects = [];
+const COLLISION_BUFFER = 5; 
+const MAX_PLACEMENT_ATTEMPTS = 30; 
+
+function checkCollision(newObj) {
+  for (const existingObj of placedObjects) {
+    const dx = newObj.x - existingObj.x;
+    const dy = newObj.y - existingObj.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const minSafeDist = newObj.radius + existingObj.radius + COLLISION_BUFFER;
+    if (distance < minSafeDist) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function tryToPlaceObject(positionGenerator, radius) {
+  let attempts = 0;
+  while (attempts < MAX_PLACEMENT_ATTEMPTS) {
+    attempts++;
+    const newAttempt = positionGenerator();
+    const newObj = {
+      x: newAttempt.x,
+      y: newAttempt.y,
+      radius: radius,
+      data: newAttempt
+    };
+    if (!checkCollision(newObj)) {
+      placedObjects.push(newObj);
+      return newObj;
+    }
+  }
+  return null;
+}
+// ===================================================================
+// END: COLLISION LOGIC
+// ===================================================================
+
+
+// ===================================================================
+// START: ORIGINAL JAVASCRIPT (Functions unchanged)
+// ===================================================================
+
+function seededRandom(seed) {
+  let x = Math.sin(seed++) * 10000;
+  return x - Math.floor(x);
+}
+
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function colorByType(type) {
+  const palette = {
+    Volcanic: ['#ff4500', '#ff8c00'],
+    Oceanic: ['#1e90ff', '#00bfff'],
+    Ice: ['#f0f8ff', '#e0ffff'],
+    Gas: ['#b19cd9', '#dda0dd'],
+    Crystalline: ['#00ffff', '#20b2aa'],
+    Jungle: ['#32cd32', '#228b22'],
+    Desert: ['#edc9af', '#deb887'],
+    Artificial: ['#aaaaaa', '#888888']
+  };
+  const colors = palette[type] || ['#999', '#777'];
+  return colors[Math.floor(Math.random() * colors.length)];
+}
+// ===================================================================
+// END: ORIGINAL JAVASCRIPT
+// ===================================================================
+
+
+// ===================================================================
+// START: MODIFIED GENERATE FUNCTION
+// ===================================================================
+
+function generate() {
+  // We no longer get 'svg' here, it's global
+  svg.innerHTML = '';
+  placedObjects = []; 
+  
+  // --- NEW: Reset the viewBox on every new generation ---
+  viewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+  updateViewBox(); // Apply the reset
+  // --- END NEW ---
+  
+  const seedInput = document.getElementById('seedInput').value || 'default';
+  const baseSeed = seedInput.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const avgPlanetSize = 27.5; 
+
+  // Radiation Zone
+  const radiation = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  radiation.setAttribute('r', 120);
+  radiation.setAttribute('fill', 'rgba(255,140,0,0.15)');
+  radiation.setAttribute('stroke', 'red');
+  radiation.setAttribute('stroke-dasharray', '5,3');
+  radiation.setAttribute('stroke-width', '1.5');
+  svg.appendChild(radiation);
+
+  // Star
+  const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  star.setAttribute('r', 22);
+  star.setAttribute('fill', 'yellow');
+  svg.appendChild(star);
+  placedObjects.push({ x: 0, y: 0, radius: 22 });
+
+  const planetTypes = ['Volcanic', 'Oceanic', 'Ice', 'Gas', 'Crystalline', 'Jungle', 'Desert', 'Artificial'];
+  const planetNameRoots = ['Koraon', 'Erebus', 'Nalara', 'Zephyra', 'Tarkon', 'Virella', 'Dravon', 'Solara', 'Elios', 'Thalor', 'Maren', 'Kythera'];
+  const stationSuffix = ['Outpost', 'Base', 'Hub', 'Station', 'Yard', 'Platform', 'Colony', 'Complex', 'Haven', 'Depot', 'Harbor', 'Node', 'Relay'];
+
+  const numPlanets = Math.floor(seededRandom(baseSeed) * 5) + 5;
+  for (let i = 0; i < numPlanets; i++) {
+    const type = randomChoice(planetTypes);
+    const nameRoot = planetNameRoots[i % planetNameRoots.length];
+    const planetName = nameRoot;
+    const orbitRadius = 140 + i * 70;
+    const planetSize = 20 + Math.random() * 15;
+    const color = colorByType(type);
+
+    const orbit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    orbit.setAttribute('r', orbitRadius);
+    orbit.setAttribute('fill', 'none');
+    orbit.setAttribute('stroke', 'rgba(100,100,100,0.3)');
+    svg.appendChild(orbit);
+
+    // Planet
+    const angle = Math.random() * Math.PI * 2;
+    const px = Math.cos(angle) * orbitRadius;
+    const py = Math.sin(angle) * orbitRadius;
+    
+    placedObjects.push({ x: px, y: py, radius: planetSize });
+
+    const planet = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    planet.setAttribute('cx', px);
+    planet.setAttribute('cy', py);
+    planet.setAttribute('r', planetSize);
+    planet.setAttribute('fill', color);
+    planet.setAttribute('stroke', '#fff');
+    planet.setAttribute('stroke-width', '0.5');
+    svg.appendChild(planet);
+
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', px + planetSize + 5);
+    label.setAttribute('y', py);
+    label.textContent = planetName + ' (' + type + ')';
+    svg.appendChild(label);
+
+    // Moons
+    const moonSize = planetSize / 2;
+    const numMoons = Math.floor(Math.random() * 4);
+
+    for (let m = 0; m < numMoons; m++) {
+      const moonPositionGenerator = () => {
+        const moonOrbitRadius = planetSize + moonSize + (Math.random() * 20 + 15);
+        const moonAngle = Math.random() * Math.PI * 2;
+        const mx = px + Math.cos(moonAngle) * moonOrbitRadius;
+        const my = py + Math.sin(moonAngle) * moonOrbitRadius;
+        return { x: mx, y: my, orbitRadius: moonOrbitRadius };
+      };
+      
+      const placedMoon = tryToPlaceObject(moonPositionGenerator, moonSize);
+      
+      if (placedMoon) {
+        const { x: mx, y: my, orbitRadius } = placedMoon.data;
+        
+        const moonOrbit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        moonOrbit.setAttribute('cx', px);
+        moonOrbit.setAttribute('cy', py);
+        moonOrbit.setAttribute('r', orbitRadius);
+        moonOrbit.setAttribute('fill', 'none');
+        moonOrbit.setAttribute('stroke', 'rgba(100,100,100,0.2)');
+        moonOrbit.setAttribute('stroke-width', '0.5');
+        svg.appendChild(moonOrbit);
+        
+        const moon = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        moon.setAttribute('cx', mx);
+        moon.setAttribute('cy', my);
+        moon.setAttribute('r', moonSize);
+        moon.setAttribute('fill', '#ccc');
+        moon.setAttribute('stroke', '#fff');
+        moon.setAttribute('stroke-width', '0.5');
+        svg.appendChild(moon);
+        
+        const moonLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        moonLabel.setAttribute('x', mx + moonSize + 5);
+        moonLabel.setAttribute('y', my);
+        moonLabel.textContent = planetName + ' ' + (m+1);
+        svg.appendChild(moonLabel);
+      }
+    }
+
+    // Planetary stations
+    const largeStationSize = planetSize / 3;
+    const smallStationSize = largeStationSize / 3;
+
+    for (let j = 0; j < 5; j++) {
+      const isMajor = j < 2;
+      const size = isMajor ? largeStationSize : smallStationSize;
+      const stationRadius = size / 2; 
+
+      const stationPositionGenerator = () => {
+        const angleOffset = Math.random() * Math.PI * 2;
+        const dist = planetSize + 25 + (isMajor ? 10 : 30) + (Math.random() * 15);
+        const sx = px + Math.cos(angleOffset) * dist;
+        const sy = py + Math.sin(angleOffset) * dist;
+        return { x: sx, y: sy };
+      };
+      
+      const placedStation = tryToPlaceObject(stationPositionGenerator, stationRadius);
+
+      if (placedStation) {
+        const { x: sx, y: sy } = placedStation.data;
+        
+        const station = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        station.setAttribute('x', sx - size / 2);
+        station.setAttribute('y', sy - size / 2);
+        station.setAttribute('width', size);
+        station.setAttribute('height', size);
+        station.setAttribute('fill', isMajor ? '#ffcc00' : '#888');
+        svg.appendChild(station);
+
+        const stationLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        stationLabel.setAttribute('x', sx + 5);
+        stationLabel.setAttribute('y', sy);
+        const cityType = isMajor ? 'Major' : 'Minor';
+        stationLabel.textContent = planetName + ' ' + randomChoice(stationSuffix) + ' (' + cityType + ')';
+        svg.appendChild(stationLabel);
+      }
+    }
+  }
+
+  // Independent space stations
+  const largeIndStationSize = avgPlanetSize / 3;
+  const smallIndStationSize = largeIndStationSize / 3;
+  
+  const totalStations = 15 + Math.floor(Math.random() * 10);
+  for (let s = 0; s < totalStations; s++) {
+    const highLevel = Math.random() > 0.5;
+    const size = highLevel ? largeIndStationSize : smallIndStationSize;
+    const stationRadius = size / 2;
+
+    const indStationPositionGenerator = () => {
+      const sx = Math.random() * 800 - 400;
+      const sy = Math.random() * 800 - 400;
+      return { x: sx, y: sy };
+    };
+
+    const placedIndStation = tryToPlaceObject(indStationPositionGenerator, stationRadius);
+
+    if (placedIndStation) {
+      const { x: sx, y: sy } = placedIndStation.data;
+      
+      const station = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      station.setAttribute('x', sx - size / 2);
+      station.setAttribute('y', sy - size / 2);
+      station.setAttribute('width', size);
+      station.setAttribute('height', size);
+      station.setAttribute('fill', highLevel ? '#ffcc00' : '#777');
+      svg.appendChild(station);
+
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', sx + 5);
+      label.setAttribute('y', sy);
+      label.textContent = randomChoice(planetNameRoots) + ' ' + randomChoice(stationSuffix);
+      svg.appendChild(label);
+    }
+  }
+
+  // Capital
+  const capSize = 10;
+  const capitalPositionGenerator = () => {
+    const capX = Math.random() * 40 - 20;
+    const capY = Math.random() * 40 - 20;
+    return { x: capX, y: capY };
+  };
+  
+  const placedCapital = tryToPlaceObject(capitalPositionGenerator, capSize);
+  
+  if (placedCapital) {
+    const { x: capX, y: capY } = placedCapital.data;
+    const capital = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    capital.setAttribute('points', `${capX},${capY - capSize} ${capX - capSize},${capY + capSize} ${capX + capSize},${capY + capSize}`);
+    capital.setAttribute('fill', '#ff66ff');
+    svg.appendChild(capital);
+
+    const capLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    capLabel.setAttribute('x', capX + 15);
+    capLabel.setAttribute('y', capY);
+    capLabel.textContent = 'Capital: ' + randomChoice(planetNameRoots) + ' Prime';
+    svg.appendChild(capLabel);
+  }
+
+  // Stargate
+  const gateSize = 10;
+  const stargatePositionGenerator = () => {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 400 + Math.random() * 50;
+    const gx = Math.cos(angle) * radius;
+    const gy = Math.sin(angle) * radius;
+    return { x: gx, y: gy };
+  };
+
+  const placedStargate = tryToPlaceObject(stargatePositionGenerator, gateSize);
+  
+  if (placedStargate) {
+    const { x: gx, y: gy } = placedStargate.data;
+    const gate = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    gate.setAttribute('points', `${gx},${gy - gateSize} ${gx - gateSize},${gy + gateSize} ${gx + gateSize},${gy + gateSize}`);
+    gate.setAttribute('fill', '#00ffff');
+    svg.appendChild(gate);
+    const gateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    gateLabel.setAttribute('x', gx + 10);
+    gateLabel.setAttribute('y', gy);
+    gateLabel.textContent = 'Stargate';
+    svg.appendChild(gateLabel);
+  }
+  
+  updateLabelVisibility();
+}
+// ===================================================================
+// END: MODIFIED GENERATE FUNCTION
+// ===================================================================
+
+
+// ===================================================================
+// START: UNMODIFIED ORIGINAL FUNCTIONS
+// ===================================================================
+
+function randomSeed() {
+  const s = Math.random().toString(36).substring(2, 8);
+  document.getElementById('seedInput').value = s;
+  generate();
+}
+
+generate(); // Initial call
+
+let labelsVisible = true;
+
+function toggleLabels() {
+  labelsVisible = !labelsVisible;
+  updateLabelVisibility();
+}
+
+function updateLabelVisibility() {
+  const labels = svg.querySelectorAll('text');
+  labels.forEach(label => {
+    label.style.display = labelsVisible ? 'inline' : 'none';
+  });
+  
+  const toggleButton = document.querySelector('button[onclick="toggleLabels()"]');
+  if (toggleButton) {
+    toggleButton.textContent = labelsVisible ? 'Toggle Labels' : 'Show Labels';
+  }
+}
+// ===================================================================
+// END: UNMODIFIED ORIGINAL FUNCTIONS
+// ===================================================================
+
+
+// ===================================================================
+// START: NEW PAN & ZOOM FUNCTIONS
+// ===================================================================
+
+/**
+ * Applies the current viewBox object to the SVG element.
+ */
+function updateViewBox() {
+  svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+}
+
+/**
+ * Helper function to convert screen coordinates (like e.clientX)
+ * into SVG coordinates, respecting the current pan and zoom.
+ * @param {Event} e - The mouse event (e.g., mousedown, wheel).
+ * @returns {object} - An object with { x, y } in SVG space.
+ */
+function getSvgCoordinates(e) {
+  const CTM = svg.getScreenCTM();
+  if (!CTM) return { x: 0, y: 0 }; // Error fallback
+  
+  let pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  pt = pt.matrixTransform(CTM.inverse());
+  return { x: pt.x, y: pt.y };
+}
+
+// --- Event Listeners for Pan and Zoom ---
+
+svg.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return; // Only pan on left click
+  isPanning = true;
+  startPoint = getSvgCoordinates(e); // Get start point in SVG space
+  svg.style.cursor = 'grabbing';
+  e.preventDefault();
+});
+
+svg.addEventListener('mouseup', (e) => {
+  isPanning = false;
+  svg.style.cursor = 'grab';
+  e.preventDefault();
+});
+
+svg.addEventListener('mouseleave', (e) => {
+  isPanning = false;
+  svg.style.cursor = 'grab';
+});
+
+svg.addEventListener('mousemove', (e) => {
+  if (!isPanning) return;
+  e.preventDefault();
+  
+  const newPoint = getSvgCoordinates(e);
+  // Calculate delta in SVG space
+  const dx = startPoint.x - newPoint.x;
+  const dy = startPoint.y - newPoint.y;
+  
+  // Apply delta to viewBox
+  viewBox.x += dx;
+  viewBox.y += dy;
+  updateViewBox();
+});
+
+svg.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  
+  const zoomFactor = 1.1; // How much to zoom on each scroll
+  const delta = e.deltaY > 0 ? zoomFactor : 1 / zoomFactor; // Zoom in or out
+  
+  const mousePoint = getSvgCoordinates(e); // Get zoom center
+  
+  // Calculate new width/height
+  const newWidth = viewBox.w * delta;
+  const newHeight = viewBox.h * delta;
+  
+  // Calculate new x/y to keep zoom centered on mouse
+  viewBox.x = mousePoint.x - (mousePoint.x - viewBox.x) * delta;
+  viewBox.y = mousePoint.y - (mousePoint.y - viewBox.y) * delta;
+  viewBox.w = newWidth;
+  viewBox.h = newHeight;
+  
+  updateViewBox();
+});
+
+// Initialize viewBox on first load
+updateViewBox();
+
+// ===================================================================
+// END: NEW PAN & ZOOM FUNCTIONS
+// ===================================================================
+</script>
+</body>
+</html>
