@@ -1,540 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Star System Generator</title>
 <style>
-  /* All CSS is unchanged */
-  body {
-    background: radial-gradient(circle at center, #000010, #000000);
-    color: white;
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    overflow: hidden;
-  }
-  #app-container {
-    display: flex;
-    width: 100vw;
-    height: 100vh;
-  }
-  #controls {
-    width: 240px;
-    height: 100vh;
-    background: #1a2a3a;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-    z-index: 10;
-    text-align: left;
-  }
-  svg {
-    flex: 1;
-    height: 100vh;
-    cursor: grab;
-    shape-rendering: geometricPrecision;
-  }
-  #controls h1 {
-    font-size: 1.25rem;
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-  }
-  #controls label {
-    display: block;
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-bottom: 5px;
-  }
-  #controls input {
-    width: 100%;
-    padding: 8px;
-    box-sizing: border-box;
-    background: #2a3a4a;
-    border: 1px solid #445;
-    color: white;
-    border-radius: 4px;
-    margin-bottom: 10px;
-  }
-  #controls .instructions {
-    font-size: 0.8rem;
-    color: #8a9aaa;
-    margin-top: 20px;
-    line-height: 1.4;
-  }
-  button {
-    width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 6px;
-    border: none;
-    background: #e6a800;
-    color: #1a2a3a;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 0.9rem;
-  }
-  button:hover {
-    background: #ffd966;
-  }
-  text {
-    font-size: 10px;
-    fill: #ccc;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    text-rendering: geometricPrecision;
-  }
+  body { margin:0; font-family:'Segoe UI',sans-serif; background:#031018; color:#e6f1ff; display:flex; height:100vh; overflow:hidden }
+  .sidebar { width:280px; background:#041924; border-right:2px solid #072839; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; }
+  .sidebar h1{font-size:1.3em;margin:0;color:#fff}
+  .sidebar label{color:#9fcbdc}
+  .sidebar input{width:100%;padding:8px;border-radius:6px;border:1px solid #0b3c57;background:#072839;color:#aee1ff}
+  .buttons{display:flex;flex-direction:column;gap:8px}
+  button{padding:8px 12px;border-radius:6px;border:none;background:#f6c435;color:#111;font-weight:700;cursor:pointer}
+  button:hover{background:#ffda66}
+  #map{flex:1;cursor:grab;background:linear-gradient(180deg,#021018,#031018)}
+  text{font-size:11px;fill:#cfeff7;user-select:none}
 </style>
 </head>
 <body>
-
-  <div id="app-container">
-    <div id="controls">
-      <h1>Star System Generator</h1>
-      <label for="seedInput">Seed</label>
-      <input id="seedInput" placeholder="Enter seed" />
-      <button onclick="generate()">Generate</button>
-      <button onclick="randomSeed()">Random Seed</button>
-      <button onclick="toggleLabels()">Toggle Labels</button>
-      <p class="instructions">Drag to pan, scroll to zoom. Same seed = same system.</p>
+  <div class="sidebar">
+    <h1>Star System Generator</h1>
+    <label for="seedInput">Seed</label>
+    <input id="seedInput" placeholder="Enter seed (e.g. S12345)" />
+    <div class="buttons">
+      <button id="generateBtn">Generate</button>
+      <button id="randomSeedBtn">Random Seed</button>
+      <button id="toggleLabelsBtn">Toggle Labels</button>
     </div>
-    <svg id="map" viewBox="-500 -500 1000 1000"></svg>
+    <small style="color:#86a7ad">Drag to pan, scroll to zoom. Same seed = same system.</small>
   </div>
 
+  <svg id="map" viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="Star system map"></svg>
+
 <script>
-// ===================================================================
-// START: PAN & ZOOM VARIABLES (Unchanged)
-// ===================================================================
-
 const svg = document.getElementById('map');
-let viewBox = { x: -500, y: -500, w: 1000, h: 1000 };
-let isPanning = false;
-let startPoint = { x: 0, y: 0 };
+let viewBox={x:-500,y:-500,w:1000,h:1000};
+let isPanning=false;let startPoint={x:0,y:0};let labelsVisible=true;let placedObjects=[];
 
-// ===================================================================
-// START: COLLISION LOGIC (Unchanged)
-// ===================================================================
-let placedObjects = [];
-const COLLISION_BUFFER = 5; 
-const MAX_PLACEMENT_ATTEMPTS = 30; 
+// --- CORE HELPER FUNCTIONS (UNCHANGED) ---
+function updateViewBox(){svg.setAttribute('viewBox',`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`)}
+function getSvgCoordinates(e){const r=svg.getBoundingClientRect();const rx=viewBox.w/r.width,ry=viewBox.h/r.height;return{x:viewBox.x+(e.clientX-r.left)*rx,y:viewBox.y+(e.clientY-r.top)*ry}};
+function seededRNG(seed){let h=2166136261>>>0;for(let i=0;i<seed.length;i++)h=Math.imul(h^seed.charCodeAt(i),16777619)>>>0;let s=h;return()=>{s=(Math.imul(48271,s)%2147483647);return(s&0x7fffffff)/2147483647}};
+function choice(r,a){return a[Math.floor(r()*a.length)]}
+function clear(){svg.innerHTML='';placedObjects=[]}
+function collides(x,y,r){return placedObjects.some(o=>Math.hypot(x-o.x,y-o.y)<(r+o.r+10))}
+function reserve(x,y,r){placedObjects.push({x,y,r})}
+function drawText(x,y,txt,small=false){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=txt;if(small)t.setAttribute('font-size','10');svg.appendChild(t)}
+function polygonPoints(x,y,r,sides){let pts=[];for(let i=0;i<sides;i++){const ang=(Math.PI*2*i/sides);pts.push((x+r*Math.cos(ang))+','+(y+r*Math.sin(ang)))}return pts.join(' ')}
 
-function checkCollision(newObj) {
-  for (const existingObj of placedObjects) {
-    const dx = newObj.x - existingObj.x;
-    const dy = newObj.y - existingObj.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const minSafeDist = newObj.radius + existingObj.radius + COLLISION_BUFFER;
-    if (distance < minSafeDist) {
-      return true;
+// --- PROCEDURAL NAME GENERATION ---
+function generateDesignation(rng) {
+    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Avoid I, O
+    const r = rng();
+    if (r < 0.3) { // 3-digit number (e.g., 117)
+        return (Math.floor(rng() * 900) + 100).toString();
+    } else if (r < 0.7) { // Letter-Number (e.g., K-19)
+        return `${choice(rng, letters)}-${(Math.floor(rng() * 90) + 10)}`;
+    } else { // Number-Letter (e.g., 42-B)
+        return `${(Math.floor(rng() * 90) + 10)}-${choice(rng, letters)}`;
     }
-  }
-  return false;
 }
-function tryToPlaceObject(positionGenerator, radius) {
-  let attempts = 0;
-  while (attempts < MAX_PLACEMENT_ATTEMPTS) {
-    attempts++;
-    const newAttempt = positionGenerator();
-    const newObj = {
-      x: newAttempt.x,
-      y: newAttempt.y,
-      radius: radius,
-      data: newAttempt
-    };
-    if (!checkCollision(newObj)) {
-      placedObjects.push(newObj);
-      return newObj;
-    }
-  }
-  return null;
-}
-// ===================================================================
-// END: COLLISION LOGIC
-// ===================================================================
 
+// --- MAIN GENERATION FUNCTION ---
+function generate(){
+  clear();
+  const seed=document.getElementById('seedInput').value||'default';
+  const rng=seededRNG(seed);
 
-// ===================================================================
-// START: ORIGINAL JAVASCRIPT (Functions unchanged)
-// ===================================================================
-function seededRandom(seed) {
-  let x = Math.sin(seed++) * 10000;
-  return x - Math.floor(x);
-}
-function randomChoice(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-function colorByType(type) {
-  const palette = {
-    Volcanic: ['#ff4500', '#ff8c00'],
-    Oceanic: ['#1e90ff', '#00bfff'],
-    Ice: ['#f0f8ff', '#e0ffff'],
-    Gas: ['#b19cd9', '#dda0dd'],
-    Crystalline: ['#00ffff', '#20b2aa'],
-    Jungle: ['#32cd32', '#228b22'],
-    Desert: ['#edc9af', '#deb887'],
-    Artificial: ['#aaaaaa', '#888888']
-  };
-  const colors = palette[type] || ['#999', '#777'];
-  return colors[Math.floor(Math.random() * colors.length)];
-}
-// ===================================================================
-// END: ORIGINAL JAVASCRIPT
-// ===================================================================
+  const rad=document.createElementNS('http://www.w3.org/2000/svg','circle');rad.setAttribute('r',120);rad.setAttribute('fill','rgba(255,140,0,0.1)');rad.setAttribute('stroke','rgba(255,80,0,0.25)');rad.setAttribute('stroke-dasharray','6 4');svg.appendChild(rad);reserve(0,0,120);
+  const star=document.createElementNS('http://www.w3.org/2000/svg','circle');star.setAttribute('r',26);star.setAttribute('fill','#fff29f');svg.appendChild(star);reserve(0,0,26);
 
-
-// ===================================================================
-// START: GENERATE FUNCTION (Unchanged)
-// ===================================================================
-function generate() {
-  svg.innerHTML = '';
-  placedObjects = []; 
-  viewBox = { x: -500, y: -500, w: 1000, h: 1000 };
-  updateViewBox();
+  // --- SCI-FI DATASETS (FULLY PROCEDURAL) ---
+  const planetTypes=['Volcanic','Oceanic','Ice','Gas','Crystalline','Jungle','Desert','Artificial','Toxic','Shadow','Radiant','Coral','Storm','Barren','Frozen','Magma','Arid',
+                     'Tidal-Locked','Ringed World','Tesseract','Neutronium Core','Terraformed','Cybernetic','Rogue Planet','Ecumenopolis','Void-Wreck','Shattered','Relic Station',
+                     'Ruined Ecumenopolis', 'Forge World', 'Dead Archive', 'Phase-World', 'Karst World'];
+  // Name roots for planets and stations
+  const roots=['Koraon','Erebus','Nalara','Zephyra','Tarkon','Virella','Dravon','Solara','Elios','Thalor','Maren','Kythera','Rhegan','Velara','Xenon','Orpheus','Lythera','Zanros','Pereon','Vastor','Aelion','Boreas','Caelos','Vindra','Morthan','Seren','Ulyra','Tirion',
+               'Cygnus','Aether','Stygia','Chronos','Andromeda','Nebula','Kryll','Jovian','Rylos','Galactic','Astra','Hyperion','Veridian','Nova','Zydar','Onyx','Sagan',
+               'Proxima', 'Alpha-C', 'Beta-G', 'Sector-9', 'Rift', 'Aegis', 'Heliopax'];
   
-  const seedInput = document.getElementById('seedInput').value || 'default';
-  const baseSeed = seedInput.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const avgPlanetSize = 27.5; 
+  // Prefixes for procedural names
+  const depotPrefixes = ['Mining Depot', 'Fuel Depot', 'Trade Hub', 'Logistics Node', 'Refinery', 'Warehouse', 'Orbital Armory', 'Dockyard', 'Transit Station', 'Cloning Facility', 'Zero-G Farm', 'Quantum Relay', 'Aetherium Refinery', 'Nav-Buoy', 'Xeno-Containment'];
+  const militaryPrefixes = ['FWD Outpost', 'Patrol Point', 'E-Warfare Node', 'QRF Garrison', 'Listening Post', 'Sector HQ', 'Strike Wing', 'Armory', 'Defense Pylon', 'Checkpoint', 'Fighter Scramble', 'Shield Generator'];
+  const ruinPrefixes = ['Observation Post', 'Sentry Array', 'Deep Space Relay', 'Autonomous Beacon', 'Listening Station', 'Ancient Monitor', 'Xeno-Archive', 'Precursor Pylon', 'Silent Cartographer', 'Ruin-Core'];
+  // Suffixes for isolated station names
+  const stationSuffixes = ['Station', 'Port', 'Citadel', 'Haven', 'Terminus', 'Reach', 'Nexus', 'Point', 'Sanctuary', 'Platform', 'Base', 'Spire', 'Anchor'];
+  // --- END DATASETS ---
 
-  // Radiation Zone
-  const radiation = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  radiation.setAttribute('r', 120);
-  radiation.setAttribute('fill', 'rgba(255,140,0,0.15)');
-  radiation.setAttribute('stroke', 'red');
-  radiation.setAttribute('stroke-dasharray', '5,3');
-  radiation.setAttribute('stroke-width', '1.5');
-  svg.appendChild(radiation);
+  // 1. GENERATE PLANETS
+  const numPlanets=Math.floor(rng()*4)+5; // 5-8 planets
+  let planetClusters=[];
+  for(let i=0;i<numPlanets;i++){
+    const type=choice(rng,planetTypes);
+    const name=choice(rng,roots)+'-'+(Math.floor(rng()*900)+100);
+    const orbit=180+i*130+Math.floor(rng()*30);
+    const orbitC=document.createElementNS('http://www.w3.org/2000/svg','circle');orbitC.setAttribute('r',orbit);orbitC.setAttribute('fill','none');orbitC.setAttribute('stroke','rgba(255,255,255,0.05)');svg.appendChild(orbitC);
+    let px,py;let tries=0;do{const a=rng()*Math.PI*2;px=Math.cos(a)*orbit;py=Math.sin(a)*orbit;tries++;}while(collides(px,py,20)&&tries<25);reserve(px,py,20);
+    const planet=document.createElementNS('http://www.w3.org/2000/svg','circle');planet.setAttribute('cx',px);planet.setAttribute('cy',py);planet.setAttribute('r',12+rng()*8);planet.setAttribute('fill',choice(rng,['#4cc9f0','#f72585','#b5179e','#7209b7','#3a0ca3','#4361ee','#4895ef','#4cc9f0']));svg.appendChild(planet);
+    if(labelsVisible)drawText(px+20,py+5,`${name} (${type})`);
+    planetClusters.push({x:px,y:py,name});
+  }
 
-  // Star
-  const star = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  star.setAttribute('r', 22);
-  star.setAttribute('fill', 'yellow');
-  svg.appendChild(star);
-  placedObjects.push({ x: 0, y: 0, radius: 22 });
-
-  const planetTypes = ['Volcanic', 'Oceanic', 'Ice', 'Gas', 'Crystalline', 'Jungle', 'Desert', 'Artificial'];
-  const planetNameRoots = ['Koraon', 'Erebus', 'Nalara', 'Zephyra', 'Tarkon', 'Virella', 'Dravon', 'Solara', 'Elios', 'Thalor', 'Maren', 'Kythera'];
-  const stationSuffix = ['Outpost', 'Base', 'Hub', 'Station', 'Yard', 'Platform', 'Colony', 'Complex', 'Haven', 'Depot', 'Harbor', 'Node', 'Relay'];
-
-  const numPlanets = Math.floor(seededRandom(baseSeed) * 5) + 5;
-  for (let i = 0; i < numPlanets; i++) {
-    const type = randomChoice(planetTypes);
-    const nameRoot = planetNameRoots[i % planetNameRoots.length];
-    const planetName = nameRoot;
-    const orbitRadius = 140 + i * 70;
-    const planetSize = 20 + Math.random() * 15;
-    const color = colorByType(type);
-
-    const orbit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    orbit.setAttribute('r', orbitRadius);
-    orbit.setAttribute('fill', 'none');
-    orbit.setAttribute('stroke', 'rgba(100,100,100,0.3)');
-    svg.appendChild(orbit);
-
-    // Planet
-    const angle = Math.random() * Math.PI * 2;
-    const px = Math.cos(angle) * orbitRadius;
-    const py = Math.sin(angle) * orbitRadius;
-    placedObjects.push({ x: px, y: py, radius: planetSize });
-    const planet = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    planet.setAttribute('cx', px);
-    planet.setAttribute('cy', py);
-    planet.setAttribute('r', planetSize);
-    planet.setAttribute('fill', color);
-    planet.setAttribute('stroke', '#fff');
-    planet.setAttribute('stroke-width', '0.5');
-    svg.appendChild(planet);
-    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    label.setAttribute('x', px + planetSize + 5);
-    label.setAttribute('y', py);
-    label.textContent = planetName + ' (' + type + ')';
-    svg.appendChild(label);
-
-    // Moons
-    const moonSize = planetSize / 2;
-    const numMoons = Math.floor(Math.random() * 4);
-    for (let m = 0; m < numMoons; m++) {
-      const moonPositionGenerator = () => {
-        const moonOrbitRadius = planetSize + moonSize + (Math.random() * 20 + 15);
-        const moonAngle = Math.random() * Math.PI * 2;
-        const mx = px + Math.cos(moonAngle) * moonOrbitRadius;
-        const my = py + Math.sin(moonAngle) * moonOrbitRadius;
-        return { x: mx, y: my, orbitRadius: moonOrbitRadius };
-      };
-      const placedMoon = tryToPlaceObject(moonPositionGenerator, moonSize);
-      if (placedMoon) {
-        const { x: mx, y: my, orbitRadius } = placedMoon.data;
-        const moonOrbit = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        moonOrbit.setAttribute('cx', px);
-        moonOrbit.setAttribute('cy', py);
-        moonOrbit.setAttribute('r', orbitRadius);
-        moonOrbit.setAttribute('fill', 'none');
-        moonOrbit.setAttribute('stroke', 'rgba(100,100,100,0.2)');
-        moonOrbit.setAttribute('stroke-width', '0.5');
-        svg.appendChild(moonOrbit);
-        const moon = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        moon.setAttribute('cx', mx);
-        moon.setAttribute('cy', my);
-        moon.setAttribute('r', moonSize);
-        moon.setAttribute('fill', '#ccc');
-        moon.setAttribute('stroke', '#fff');
-        moon.setAttribute('stroke-width', '0.5');
-        svg.appendChild(moon);
-        const moonLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        moonLabel.setAttribute('x', mx + moonSize + 5);
-        moonLabel.setAttribute('y', my);
-        moonLabel.textContent = planetName + ' ' + (m+1);
-        svg.appendChild(moonLabel);
+  // 2. GENERATE PLANETARY CLUSTERS (Cities + Depots)
+  planetClusters.forEach(p=>{
+    const numCities=Math.floor(rng()*3)+1; // INCREASED: 1-3 cities
+    for(let c=0;c<numCities;c++){
+      const angle=rng()*Math.PI*2;const dist=40+rng()*50;const cx=p.x+Math.cos(angle)*dist;const cy=p.y+Math.sin(angle)*dist;
+      if(!collides(cx,cy,8)){
+        reserve(cx,cy,8);
+        const city=document.createElementNS('http://www.w3.org/2000/svg','polygon');city.setAttribute('points',polygonPoints(cx,cy,8,6));city.setAttribute('fill',choice(rng,['#00ffff','#ff66ff','#a8f7ff','#b8aaff']));svg.appendChild(city);
+        if(labelsVisible)drawText(cx+10,cy,p.name+' City');
+        // Add depots near city
+        const depCount=2+Math.floor(rng()*4); // 2-5 depots
+        for(let d=0;d<depCount;d++){
+          const ang=rng()*Math.PI*2;const dist2=25+rng()*25;const dx=cx+Math.cos(ang)*dist2;const dy=cy+Math.sin(ang)*dist2;
+          if(!collides(dx,dy,5)){
+            reserve(dx,dy,5);
+            const depot=document.createElementNS('http://www.w3.org/2000/svg','rect');depot.setAttribute('x',dx-4);depot.setAttribute('y',dy-4);depot.setAttribute('width',8);depot.setAttribute('height',8);depot.setAttribute('fill',choice(rng,['#ffcc00','#ffaa00','#ff9933','#ffd633']));svg.appendChild(depot);
+            // UPDATED: Procedural depot name
+            const depotName = choice(rng, depotPrefixes) + " " + generateDesignation(rng);
+            if(labelsVisible)drawText(dx+8,dy, depotName);
+          }
+        }
       }
     }
-
-    // Planetary stations
-    const largeStationSize = planetSize / 3;
-    const smallStationSize = largeStationSize / 3;
-    for (let j = 0; j < 5; j++) {
-      const isMajor = j < 2;
-      const size = isMajor ? largeStationSize : smallStationSize;
-      const stationRadius = size / 2; 
-      const stationPositionGenerator = () => {
-        const angleOffset = Math.random() * Math.PI * 2;
-        const dist = planetSize + 25 + (isMajor ? 10 : 30) + (Math.random() * 15);
-        const sx = px + Math.cos(angleOffset) * dist;
-        const sy = py + Math.sin(angleOffset) * dist;
-        return { x: sx, y: sy };
-      };
-      const placedStation = tryToPlaceObject(stationPositionGenerator, stationRadius);
-      if (placedStation) {
-        const { x: sx, y: sy } = placedStation.data;
-        const station = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        station.setAttribute('x', sx - size / 2);
-        station.setAttribute('y', sy - size / 2);
-        station.setAttribute('width', size);
-        station.setAttribute('height', size);
-        station.setAttribute('fill', isMajor ? '#ffcc00' : '#888');
-        svg.appendChild(station);
-        const stationLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        stationLabel.setAttribute('x', sx + 5);
-        stationLabel.setAttribute('y', sy);
-        const cityType = isMajor ? 'Major' : 'Minor';
-        stationLabel.textContent = planetName + ' ' + randomChoice(stationSuffix) + ' (' + cityType + ')';
-        svg.appendChild(stationLabel);
-      }
-    }
-  }
-
-  // Independent space stations
-  const largeIndStationSize = avgPlanetSize / 3;
-  const smallIndStationSize = largeIndStationSize / 3;
-  const totalStations = 15 + Math.floor(Math.random() * 10);
-  for (let s = 0; s < totalStations; s++) {
-    const highLevel = Math.random() > 0.5;
-    const size = highLevel ? largeIndStationSize : smallIndStationSize;
-    const stationRadius = size / 2;
-    const indStationPositionGenerator = () => {
-      const sx = Math.random() * 800 - 400;
-      const sy = Math.random() * 800 - 400;
-      return { x: sx, y: sy };
-    };
-    const placedIndStation = tryToPlaceObject(indStationPositionGenerator, stationRadius);
-    if (placedIndStation) {
-      const { x: sx, y: sy } = placedIndStation.data;
-      const station = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      station.setAttribute('x', sx - size / 2);
-      station.setAttribute('y', sy - size / 2);
-      station.setAttribute('width', size);
-      station.setAttribute('height', size);
-      station.setAttribute('fill', highLevel ? '#ffcc00' : '#777');
-      svg.appendChild(station);
-      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      label.setAttribute('x', sx + 5);
-      label.setAttribute('y', sy);
-      label.textContent = randomChoice(planetNameRoots) + ' ' + randomChoice(stationSuffix);
-      svg.appendChild(label);
-    }
-  }
-
-  // Capital
-  const capSize = 10;
-  const capitalPositionGenerator = () => {
-    const capX = Math.random() * 40 - 20;
-    const capY = Math.random() * 40 - 20;
-    return { x: capX, y: capY };
-  };
-  const placedCapital = tryToPlaceObject(capitalPositionGenerator, capSize);
-  if (placedCapital) {
-    const { x: capX, y: capY } = placedCapital.data;
-    const capital = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    capital.setAttribute('points', `${capX},${capY - capSize} ${capX - capSize},${capY + capSize} ${capX + capSize},${capY + capSize}`);
-    capital.setAttribute('fill', '#ff66ff');
-    svg.appendChild(capital);
-    const capLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    capLabel.setAttribute('x', capX + 15);
-    capLabel.setAttribute('y', capY);
-    capLabel.textContent = 'Capital: ' + randomChoice(planetNameRoots) + ' Prime';
-    svg.appendChild(capLabel);
-  }
-
-  // Stargate
-  const gateSize = 10;
-  const stargatePositionGenerator = () => {
-    const angle = Math.random() * Math.PI * 2;
-    const radius = 400 + Math.random() * 50;
-    const gx = Math.cos(angle) * radius;
-    const gy = Math.sin(angle) * radius;
-    return { x: gx, y: gy };
-  };
-  const placedStargate = tryToPlaceObject(stargatePositionGenerator, gateSize);
-  if (placedStargate) {
-    const { x: gx, y: gy } = placedStargate.data;
-    const gate = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    gate.setAttribute('points', `${gx},${gy - gateSize} ${gx - gateSize},${gy + gateSize} ${gx + gateSize},${gy + gateSize}`);
-    gate.setAttribute('fill', '#00ffff');
-    svg.appendChild(gate);
-    const gateLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    gateLabel.setAttribute('x', gx + 10);
-    gateLabel.setAttribute('y', gy);
-    gateLabel.textContent = 'Stargate';
-    svg.appendChild(gateLabel);
-  }
-  
-  updateLabelVisibility();
-}
-// ===================================================================
-// END: GENERATE FUNCTION
-// ===================================================================
-
-
-// ===================================================================
-// START: LABEL & SEED FUNCTIONS (Unchanged)
-// ===================================================================
-function randomSeed() {
-  const s = Math.random().toString(36).substring(2, 8);
-  document.getElementById('seedInput').value = s;
-  generate();
-}
-
-generate(); // Initial call
-
-let labelsVisible = true;
-
-function toggleLabels() {
-  labelsVisible = !labelsVisible;
-  updateLabelVisibility();
-}
-
-function updateLabelVisibility() {
-  const labels = svg.querySelectorAll('text');
-  labels.forEach(label => {
-    label.style.display = labelsVisible ? 'inline' : 'none';
   });
-  
-  const toggleButton = document.querySelector('button[onclick="toggleLabels()"]');
-  if (toggleButton) {
-    toggleButton.textContent = labelsVisible ? 'Toggle Labels' : 'Show Labels';
+
+  // 3. GENERATE ISOLATED STATIONS (Hubs + Depots + Military)
+  const clusterCount=5+Math.floor(rng()*4); // INCREASED: 5-8 stations
+  for(let i=0;i<clusterCount;i++){
+    const baseX=rng()*1000-500,baseY=rng()*800-400;
+    const cityX=baseX+rng()*40-20,cityY=baseY+rng()*40-20;
+    reserve(cityX,cityY,8);
+    const hex=document.createElementNS('http://www.w3.org/2000/svg','polygon');hex.setAttribute('points',polygonPoints(cityX,cityY,8,6));hex.setAttribute('fill',choice(rng,['#00ffff','#ff66ff','#a8f7ff','#b8aaff']));svg.appendChild(hex);
+    
+    // UPDATED: Procedural station name
+    const stationName = choice(rng, roots) + " " + choice(rng, stationSuffixes);
+    if(labelsVisible)drawText(cityX+10,cityY, stationName);
+    
+    // Add military depots near station
+    const militaryCount=4+Math.floor(rng()*5); // INCREASED: 4-8 military depots
+    for(let m=0;m<militaryCount;m++){
+      const ang=rng()*Math.PI*2;const dist=30+rng()*40;const mx=cityX+Math.cos(ang)*dist;const my=cityY+Math.sin(ang)*dist;
+      if(!collides(mx,my,5)){
+        reserve(mx,my,5);
+        const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');rect.setAttribute('x',mx-6);rect.setAttribute('y',my-3);rect.setAttribute('width',12);rect.setAttribute('height',6);rect.setAttribute('fill',choice(rng,['#888','#66aaff','#99bbff','#bbbbbb','#4455aa']));svg.appendChild(rect);
+        // UPDATED: Procedural military name
+        const militaryName = choice(rng, militaryPrefixes) + " " + generateDesignation(rng);
+        if(labelsVisible)drawText(mx+10,my, militaryName);
+      }
+    }
+
+    // NEW: Add civilian depots near station
+    const depCount = 3 + Math.floor(rng() * 4); // 3-6 depots
+    for(let d=0;d<depCount;d++){
+      const ang=rng()*Math.PI*2;const dist2=25+rng()*35; // Tighter orbit than military
+      const dx=cityX+Math.cos(ang)*dist2;const dy=cityY+Math.sin(ang)*dist2;
+      if(!collides(dx,dy,5)){
+        reserve(dx,dy,5);
+        const depot=document.createElementNS('http://www.w3.org/2000/svg','rect');depot.setAttribute('x',dx-4);depot.setAttribute('y',dy-4);depot.setAttribute('width',8);depot.setAttribute('height',8);depot.setAttribute('fill',choice(rng,['#ffcc00','#ffaa00','#ff9933','#ffd633']));svg.appendChild(depot);
+        // UPDATED: Procedural depot name
+        const depotName = choice(rng, depotPrefixes) + " " + generateDesignation(rng);
+        if(labelsVisible)drawText(dx+8,dy, depotName);
+      }
+    }
   }
-}
-// ===================================================================
-// END: LABEL & SEED FUNCTIONS
-// ===================================================================
 
+  // 4. GENERATE ANCIENT RUINS (Autonomous)
+  const ruinCount = 5 + Math.floor(rng() * 4); // 5-8 ruins
+  for (let i = 0; i < ruinCount; i++) {
+    const rx = rng() * 1200 - 600;
+    const ry = rng() * 1200 - 600;
+    const r = 8; 
 
-// ===================================================================
-// START: PAN & ZOOM FUNCTIONS (REPLACE `getSvgCoordinates`)
-// ===================================================================
+    if (!collides(rx, ry, r)) {
+      reserve(rx, ry, r);
+      const ruin = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      const points = `${rx},${ry - r} ${rx + r},${ry} ${rx},${ry + r} ${rx - r},${ry}`;
+      ruin.setAttribute('points', points);
+      ruin.setAttribute('fill', '#306b5a'); 
+      ruin.setAttribute('stroke', '#5fbb9a');
+      ruin.setAttribute('stroke-width', '1');
+      svg.appendChild(ruin);
+      // UPDATED: Procedural ruin name
+      const ruinName = choice(rng, ruinPrefixes) + " " + generateDesignation(rng);
+      if (labelsVisible) {
+        drawText(rx + 12, ry, ruinName);
+      }
+    }
+  }
 
-/**
- * Applies the current viewBox object to the SVG element.
- */
-function updateViewBox() {
-  svg.setAttribute('viewBox', `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
-}
-
-/**
- * --- THIS FUNCTION IS REPLACED ---
- * Helper function to convert screen coordinates (like e.clientX)
- * into SVG coordinates, respecting the current pan and zoom.
- * @param {Event} e - The mouse event (e.g., mousedown, wheel).
- * @returns {object} - An object with { x, y } in SVG space.
- */
-function getSvgCoordinates(e) {
-  const svgRect = svg.getBoundingClientRect();
-  if (!svgRect.width || !svgRect.height) return { x: 0, y: 0 }; // Avoid divide by zero
-  
-  // Calculate mouse position relative to SVG element (in pixels)
-  const clientX = e.clientX - svgRect.left;
-  const clientY = e.clientY - svgRect.top;
-  
-  // Calculate the ratio of SVG viewBox to pixel size
-  const ratioX = viewBox.w / svgRect.width;
-  const ratioY = viewBox.h / svgRect.height;
-  
-  // Convert pixel coordinates to SVG coordinates
-  const svgX = viewBox.x + clientX * ratioX;
-  const svgY = viewBox.y + clientY * ratioY;
-  
-  return { x: svgX, y: svgY };
-}
-// --- END OF REPLACED FUNCTION ---
-
-
-// --- Event Listeners (Unchanged) ---
-svg.addEventListener('mousedown', (e) => {
-  if (e.button !== 0) return;
-  isPanning = true;
-  startPoint = getSvgCoordinates(e);
-  svg.style.cursor = 'grabbing';
-  e.preventDefault();
-});
-
-svg.addEventListener('mouseup', (e) => {
-  isPanning = false;
-  svg.style.cursor = 'grab';
-  e.preventDefault();
-});
-
-svg.addEventListener('mouseleave', (e) => {
-  isPanning = false;
-  svg.style.cursor = 'grab';
-});
-
-svg.addEventListener('mousemove', (e) => {
-  if (!isPanning) return;
-  e.preventDefault();
-  
-  const newPoint = getSvgCoordinates(e);
-  const dx = startPoint.x - newPoint.x;
-  const dy = startPoint.y - newPoint.y;
-  
-  viewBox.x += dx;
-  viewBox.y += dy;
   updateViewBox();
-});
+}
 
-svg.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  
-  const zoomFactor = 1.1;
-  const delta = e.deltaY > 0 ? zoomFactor : 1 / zoomFactor;
-  
-  const mousePoint = getSvgCoordinates(e);
-  
-  const newWidth = viewBox.w * delta;
-  const newHeight = viewBox.h * delta;
-  
-  viewBox.x = mousePoint.x - (mousePoint.x - viewBox.x) * delta;
-  viewBox.y = mousePoint.y - (mousePoint.y - viewBox.y) * delta;
-  viewBox.w = newWidth;
-  viewBox.h = newHeight;
-  
-  updateViewBox();
-});
+// --- EVENT LISTENERS (UNCHANGED) ---
+document.getElementById('generateBtn').addEventListener('click',generate);
+document.getElementById('randomSeedBtn').addEventListener('click',()=>{document.getElementById('seedInput').value='S'+Math.floor(Math.random()*900000+100000);generate()});
+document.getElementById('toggleLabelsBtn').addEventListener('click',()=>{labelsVisible=!labelsVisible;svg.querySelectorAll('text').forEach(t=>t.style.display=labelsVisible?'inline':'none')});
 
-// Initialize viewBox on first load
-updateViewBox();
+svg.addEventListener('mousedown',e=>{if(e.button!==0)return;isPanning=true;startPoint=getSvgCoordinates(e);svg.style.cursor='grabbing'});
+svg.addEventListener('mouseup',()=>{isPanning=false;svg.style.cursor='grab'});
+svg.addEventListener('mouseleave',()=>{isPanning=false;svg.style.cursor='grab'});
+svg.addEventListener('mousemove',e=>{if(!isPanning)return;const p=getSvgCoordinates(e);viewBox.x+=(startPoint.x-p.x);viewBox.y+=(startPoint.y-p.y);updateViewBox()});
+svg.addEventListener('wheel',e=>{e.preventDefault();const m=getSvgCoordinates(e);const f=e.deltaY<0?0.9:1.1;viewBox.x=m.x-(m.x-viewBox.x)*f;viewBox.y=m.y-(m.y-viewBox.y)*f;viewBox.w*=f;viewBox.h*=f;updateViewBox()});
 
-// ===================================================================
-// END: PAN & ZOOM FUNCTIONS
-// ===================================================================
+// Initial load
+document.getElementById('seedInput').value='S'+Math.floor(Math.random()*900000+100000);
+generate();
 </script>
 </body>
 </html>
