@@ -6,121 +6,34 @@
 <title>Star System Generator</title>
 <style>
   body { margin:0; font-family:'Segoe UI',sans-serif; background:#031018; color:#e6f1ff; display:flex; height:100vh; overflow:hidden }
-  .sidebar { width:280px; background:#041924; border-right:2px solid #072839; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; z-index: 10; }
+  .sidebar { width:280px; background:#041924; border-right:2px solid #072839; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px; z-index: 10; overflow-y: auto; }
   .sidebar h1{font-size:1.3em;margin:0;color:#fff}
-  .sidebar label{color:#9fcbdc}
-  .sidebar input{width:100%;padding:8px;border-radius:6px;border:1px solid #0b3c57;background:#072839;color:#aee1ff}
+  .sidebar label{color:#9fcbdc; margin-top: 8px;}
+  .sidebar input{width:100%;padding:8px;border-radius:6px;border:1px solid #0b3c57;background:#072839;color:#aee1ff; box-sizing: border-box;}
   .buttons{display:flex;flex-direction:column;gap:8px}
   button{padding:8px 12px;border-radius:6px;border:none;background:#f6c435;color:#111;font-weight:700;cursor:pointer}
   button:hover{background:#ffda66}
-  
   #map{flex:1;cursor:grab;background:linear-gradient(180deg,#021018,#031018)}
   text{font-size:11px;fill:#cfeff7;user-select:none}
-
-  /* --- NEW INFO PANEL STYLES --- */
-  #infoPanel {
-    width: 300px;
-    background: #041924;
-    border-left: 2px solid #072839;
-    display: flex;
-    flex-direction: column;
-    transition: margin-right 0.3s ease;
-    z-index: 10;
-  }
-  #infoPanel.hidden {
-    margin-right: -300px;
-  }
-  #infoToggleBtn {
-    padding: 8px 12px;
-    background: #0b3c57;
-    color: #aee1ff;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-  }
-  #infoToggleBtn:hover {
-    background: #0e4a6d;
-  }
-  #infoListContainer {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    box-sizing: border-box;
-  }
-  #infoListContainer h2 {
-    font-size: 1.2em;
-    color: #fff;
-    margin: 0 0 10px 0;
-    border-bottom: 1px solid #072839;
-    padding-bottom: 5px;
-  }
-  #infoList {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  #infoList > li {
-    margin-bottom: 8px;
-  }
-  .info-header {
-    background: #072839;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: 600;
-    color: #cfeff7;
-  }
-  .info-header.collapsible {
-    cursor: pointer;
-    color: #fff;
-  }
-  .info-header.collapsible:hover {
-    background: #0b3c57;
-  }
-  .info-header.collapsible::before {
-    content: '+ ';
-    font-weight: bold;
-    color: #f6c435;
-  }
-  .info-header.collapsible.expanded::before {
-    content: '- ';
-  }
-  .info-sublist {
-    list-style: none;
-    padding: 5px 0 0 15px;
-    margin: 0;
-    font-size: 0.85em;
-    display: none; /* Hidden by default */
-  }
-  .info-sublist.visible {
-    display: block;
-  }
-  .info-sublist li {
-    position: relative;
-    padding-left: 15px;
-    margin-top: 4px;
-    color: #b8dcec;
-  }
-  .info-sublist li::before {
-    content: '└';
-    position: absolute;
-    left: 0;
-    top: -2px;
-    color: #0b3c57;
-  }
-  /* Nested sublist */
-  .info-sublist ul {
-    list-style: none;
-    padding: 4px 0 0 15px;
-    margin: 0;
-  }
-  .info-sublist ul li::before {
-    content: '·';
-    color: #0b3c57;
-    left: -10px;
-    top: 0;
-  }
-
+  #infoPanel { width: 300px; background: #041924; border-left: 2px solid #072839; display: flex; flex-direction: column; transition: margin-right 0.3s ease; z-index: 10; }
+  #infoPanel.hidden { margin-right: -300px; }
+  #infoToggleBtn { padding: 8px 12px; background: #0b3c57; color: #aee1ff; border: none; cursor: pointer; font-weight: 700; }
+  #infoToggleBtn:hover { background: #0e4a6d; }
+  #infoListContainer { flex: 1; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+  #infoListContainer h2 { font-size: 1.2em; color: #fff; margin: 0 0 10px 0; border-bottom: 1px solid #072839; padding-bottom: 5px; }
+  #infoList { list-style: none; padding: 0; margin: 0; }
+  #infoList > li { margin-bottom: 8px; }
+  .info-header { background: #072839; padding: 6px 10px; border-radius: 4px; font-size: 0.9em; font-weight: 600; color: #cfeff7; }
+  .info-header.collapsible { cursor: pointer; color: #fff; }
+  .info-header.collapsible:hover { background: #0b3c57; }
+  .info-header.collapsible::before { content: '+ '; font-weight: bold; color: #f6c435; }
+  .info-header.collapsible.expanded::before { content: '- '; }
+  .info-sublist { list-style: none; padding: 5px 0 0 15px; margin: 0; font-size: 0.85em; display: none; }
+  .info-sublist.visible { display: block; }
+  .info-sublist li { position: relative; padding-left: 15px; margin-top: 4px; color: #b8dcec; }
+  .info-sublist li::before { content: '└'; position: absolute; left: 0; top: -2px; color: #0b3c57; }
+  .info-sublist ul { list-style: none; padding: 4px 0 0 15px; margin: 0; }
+  .info-sublist ul li::before { content: '·'; color: #0b3c57; left: -10px; top: 0; }
 </style>
 </head>
 <body>
@@ -133,332 +46,534 @@
       <button id="randomSeedBtn">Random Seed</button>
       <button id="toggleLabelsBtn">Toggle Labels</button>
     </div>
-    <small style="color:#86a7ad">Drag to pan, scroll to zoom. Same seed = same system.</small>
+    <small style="color:#86a7ad; margin-bottom: 10px;">Drag to pan, scroll to zoom. Same seed = same system.</small>
+    <label for="generatedDataList">Generated Objects (Test Data)</label>
+    <textarea id="generatedDataList" rows="12" style="width:100%;background:#072839;color:#aee1ff;border:1px solid #0b3c57;border-radius:6px;font-size:0.8em; box-sizing: border-box;" readonly placeholder="Generated cities and depots will appear here..."></textarea>
   </div>
-
   <svg id="map" viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="Star system map"></svg>
-
-  <div id="infoPanel">
+  <div id="infoPanel" class="hidden">
     <button id="infoToggleBtn">Toggle Panel</button>
     <div id="infoListContainer">
       <h2>System Directory</h2>
-      <ul id="infoList">
-        </ul>
+      <ul id="infoList"></ul>
     </div>
   </div>
-
 <script>
-const svg = document.getElementById('map');
-const infoList = document.getElementById('infoList'); // NEW: List element
-let viewBox={x:-500,y:-500,w:1000,h:1000};
-let isPanning=false;let startPoint={x:0,y:0};let labelsVisible=true;
-let placedObjects=[];
-let systemData = []; // NEW: To store generated object data
-
-// --- CORE HELPER FUNCTIONS ---
-function updateViewBox(){svg.setAttribute('viewBox',`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`)}
-function getSvgCoordinates(e){const r=svg.getBoundingClientRect();const rx=viewBox.w/r.width,ry=viewBox.h/r.height;return{x:viewBox.x+(e.clientX-r.left)*rx,y:viewBox.y+(e.clientY-r.top)*ry}};
-function seededRNG(seed){let h=2166136261>>>0;for(let i=0;i<seed.length;i++)h=Math.imul(h^seed.charCodeAt(i),16777619)>>>0;let s=h;return()=>{s=(Math.imul(48271,s)%2147483647);return(s&0x7fffffff)/2147483647}};
-function choice(r,a){return a[Math.floor(r()*a.length)]}
-function clear(){
-  svg.innerHTML='';
-  placedObjects=[];
-  systemData = []; // NEW: Clear data
-  infoList.innerHTML = ''; // NEW: Clear list UI
-}
-function collides(x,y,r){return placedObjects.some(o=>Math.hypot(x-o.x,y-o.y)<(r+o.r+15))} // Increased buffer
-function reserve(x,y,r){placedObjects.push({x,y,r})}
-function drawText(x,y,txt,small=false){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',x);t.setAttribute('y',y);t.textContent=txt;if(small)t.setAttribute('font-size','10');if(!labelsVisible)t.style.display='none';svg.appendChild(t)}
-function polygonPoints(x,y,r,sides){let pts=[];for(let i=0;i<sides;i++){const ang=(Math.PI*2*i/sides);pts.push((x+r*Math.cos(ang))+','+(y+r*Math.sin(ang)))}return pts.join(' ')}
-// NEW: Triangle points
-function trianglePoints(x, y, r) {
-    const p1 = `${x},${y - r}`;
-    const p2 = `${x + r * 0.866},${y + r * 0.5}`;
-    const p3 = `${x - r * 0.866},${y + r * 0.5}`;
-    return `${p1} ${p2} ${p3}`;
-}
-
-
-// --- PROCEDURAL NAME GENERATION ---
-function generateDesignation(rng) {
-    const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; // Avoid I, O
-    const r = rng();
-    if (r < 0.3) { // 3-digit number (e.g., 117)
-        return (Math.floor(rng() * 900) + 100).toString();
-    } else if (r < 0.7) { // Letter-Number (e.g., K-19)
-        return `${choice(rng, letters)}-${(Math.floor(rng() * 90) + 10)}`;
-    } else { // Number-Letter (e.g., 42-B)
-        return `${(Math.floor(rng() * 90) + 10)}-${choice(rng, letters)}`;
+const CONFIG = {
+    planetTypes: ['Volcanic','Oceanic','Ice','Gas','Crystalline','Jungle','Desert','Artificial','Toxic','Shadow','Radiant','Coral','Storm','Barren','Frozen','Magma','Arid',
+                  'Tidal-Locked','Ringed World','Tesseract','Neutronium Core','Terraformed','Cybernetic','Rogue Planet','Ecumenopolis','Void-Wreck','Shattered','Relic Station',
+                  'Ruined Ecumenopolis', 'Forge World', 'Dead Archive', 'Phase-World', 'Karst World'],
+    roots: ['Koraon','Erebus','Nalara','Zephyra','Tarkon','Virella','Dravon','Solara','Elios','Thalor','Maren','Kythera','Rhegan','Velara','Xenon','Orpheus','Lythera','Zanros','Pereon','Vastor','Aelion','Boreas','Caelos','Vindra','Morthan','Seren','Ulyra','Tirion',
+            'Cygnus','Aether','Stygia','Chronos','Andromeda','Nebula','Kryll','Jovian','Rylos','Galactic','Astra','Hyperion','Veridian','Nova','Zydar','Onyx','Sagan',
+            'Proxima', 'Alpha-C', 'Beta-G', 'Sector-9', 'Rift', 'Aegis', 'Heliopax'],
+    depotPrefixes: ['Mining Depot', 'Fuel Depot', 'Trade Hub', 'Logistics Node', 'Refinery', 'Warehouse', 'Orbital Armory', 'Dockyard', 'Transit Station', 'Cloning Facility', 'Zero-G Farm', 'Quantum Relay', 'Aetherium Refinery', 'Nav-Buoy', 'Xeno-Containment'],
+    militaryPrefixes: ['FWD Outpost', 'Patrol Point', 'E-Warfare Node', 'QRF Garrison', 'Listening Post', 'Sector HQ', 'Strike Wing', 'Armory', 'Defense Pylon', 'Checkpoint', 'Fighter Scramble', 'Shield Generator'],
+    ruinPrefixes: ['Ancient Monitor', 'Xeno-Archive', 'Precursor Pylon', 'Silent Cartographer', 'Ruin-Core', 'Autonomous Beacon', 'Deep Space Relay', 'Shattered Pylon', 'Void-Fragment'],
+    stationSuffixes: ['Station', 'Port', 'Citadel', 'Haven', 'Terminus', 'Reach', 'Nexus', 'Point', 'Sanctuary', 'Platform', 'Base', 'Spire', 'Anchor'],
+    citadelNames: ['Aegis', 'Bastion', 'Sanctum', 'Vigil', 'Bulwark', 'Stronghold', 'Fortress'],
+    stargateNames: ['Nexus', 'Rift-Gate', 'Void-Stream', 'Path', 'Threshold', 'Epsilon-Gate', 'Omicron-Relay'],
+    observationPrefixes: ['Observation Post', 'Listening Post', 'Sensor Array', 'E-Warfare Node', 'Deep Scan Relay', 'Patrol Point', 'Checkpoint', 'Sentry Hub', 'Watchtower'],
+    planetColors: ['#4cc9f0','#f72585','#b5179e','#7209b7','#3a0ca3','#4361ee','#4895ef','#4cc9f0'],
+    cityColors: ['#00ffff','#ff66ff','#a8f7ff','#b8aaff'],
+    highLevelCityColors: ['#a8f7ff','#b8aaff', '#e0e0ff'],
+    smallCityColors: ['#00aaaa','#aa66aa'],
+    depotColors: ['#ffcc00','#ffaa00','#ff9933','#ffd633'],
+    militaryColors: ['#888','#66aaff','#99bbff','#bbbbbb','#4455aa'],
+    citadelMilitaryColors: ['#aa4444','#bb6666','#888'],
+    planet: {
+        count: (rng) => 5 + Math.floor(rng() * 4),
+        minOrbit: 180, orbitStep: 130, orbitVariance: 30,
+        minRadius: 12, radiusVariance: 8, clusterRadius: 20
+    },
+    planetaryCity: {
+        count: (rng) => 1 + Math.floor(rng() * 3),
+        minDist: 40, distVariance: 50, size: 10,
+        depotCount: (rng) => 2 + Math.floor(rng() * 4),
+        depotMinDist: 25, depotDistVariance: 25
+    },
+    station: {
+        count: (rng) => 5 + Math.floor(rng() * 4),
+        size: 12, minRange: 400, maxRange: 1000,
+        militaryCount: (rng) => 5 + Math.floor(rng() * 6),
+        militaryMinDist: 30, militaryDistVariance: 40,
+        depotCount: (rng) => 3 + Math.floor(rng() * 4),
+        depotMinDist: 25, depotDistVariance: 35
+    },
+    stargate: {
+        size: 16, minRange: 700, maxRange: 1400,
+        cityCount: (rng) => 3 + Math.floor(rng() * 3),
+        citySize: 12, cityMinDist: 60, cityDistVariance: 60,
+        depotCount: (rng) => 5 + Math.floor(rng() * 4),
+        depotMinDist: 40, depotDistVariance: 50
+    },
+    citadel: {
+        count: (rng) => 1 + Math.floor(rng() * 2),
+        size: 14, minRange: 800, maxRange: 1600,
+        militaryCount: (rng) => 8 + Math.floor(rng() * 7),
+        militaryMinDist: 40, militaryDistVariance: 70,
+        cityCount: (rng) => 2 + Math.floor(rng() * 3),
+        citySize: 7, cityMinDist: 30, cityDistVariance: 40
+    },
+    ruin: {
+        count: (rng) => 10 + Math.floor(rng() * 8),
+        size: 8, minRange: 600, maxRange: 1200
+    },
+    observationPost: {
+        count: (rng) => 8 + Math.floor(rng() * 8),
+        size: 5, minRange: 800, maxRange: 1600
+    },
+    deepSpaceMilitary: {
+        count: (rng) => 10 + Math.floor(rng() * 10),
+        size: 5, minRange: 800, maxRange: 1600
+    },
+    deepSpaceDepot: {
+        count: (rng) => 10 + Math.floor(rng() * 10),
+        size: 5, minRange: 750, maxRange: 1500
     }
-}
+};
 
-// --- NEW: POPULATE INFO PANEL ---
-function populateInfoPanel() {
-    systemData.forEach(item => {
-        const li = document.createElement('li');
+class StarSystemGenerator {
+    constructor(svgElement, domElements) {
+        this.svg = svgElement;
+        this.dom = domElements;
+        this.rng = () => 0;
+        this.placedObjects = [];
+        this.systemData = [];
+        this.viewBox = { x: -500, y: -500, w: 1000, h: 1000 };
+        this.isPanning = false;
+        this.startPoint = { x: 0, y: 0 };
+        this.labelsVisible = true;
+        this.svgGroups = {
+            orbits: this.createEl('g', { id: 'orbitsGroup' }),
+            planets: this.createEl('g', { id: 'planetsGroup' }),
+            stations: this.createEl('g', { id: 'stationsGroup' }),
+            ruins: this.createEl('g', { id: 'ruinsGroup' }),
+            labels: this.createEl('g', { id: 'labelsGroup' })
+        };
+        Object.values(this.svgGroups).forEach(group => this.svg.appendChild(group));
+        const dangerZone = this.createEl('circle', { r: 120, fill: 'rgba(255,140,0,0.1)', stroke: 'rgba(255,80,0,0.25)', 'stroke-dasharray': '6 4' });
+        const star = this.createEl('circle', { r: 26, fill: '#fff29f' });
+        this.svg.appendChild(dangerZone);
+        this.svg.appendChild(star);
+    }
 
-        const header = document.createElement('div');
-        header.className = 'info-header';
-        header.textContent = `[${item.type}] ${item.name}`;
-        li.appendChild(header);
+    init() {
+        this.bindUIListeners();
+        this.bindMapListeners();
+        this.dom.seedInput.value = 'S' + Math.floor(Math.random() * 900000 + 100000);
+        this.generate();
+    }
 
-        if (item.structures.length > 0) {
-            header.classList.add('collapsible');
-            const sublist = document.createElement('ul');
-            sublist.className = 'info-sublist';
+    bindUIListeners() {
+        this.dom.generateBtn.addEventListener('click', () => this.generate());
+        this.dom.randomSeedBtn.addEventListener('click', () => {
+            this.dom.seedInput.value = 'S' + Math.floor(Math.random() * 900000 + 100000);
+            this.generate();
+        });
+        this.dom.toggleLabelsBtn.addEventListener('click', () => this.toggleLabels());
+        this.dom.infoToggleBtn.addEventListener('click', () => {
+            this.dom.infoPanel.classList.toggle('hidden');
+        });
+    }
 
-            item.structures.forEach(subItem => {
-                const subLi = document.createElement('li');
-                subLi.textContent = `[${subItem.type}] ${subItem.name}`;
-                
-                // Handle nested structures (e.g., cities -> depots)
-                if(subItem.structures && subItem.structures.length > 0) {
-                    const subSubList = document.createElement('ul');
-                    subItem.structures.forEach(subSubItem => {
-                        const subSubLi = document.createElement('li');
-                        subSubLi.textContent = `[${subSubItem.type}] ${subSubItem.name}`;
-                        subSubList.appendChild(subSubLi);
-                    });
-                    subLi.appendChild(subSubList);
+    generate() {
+        this.clear();
+        const seed = this.dom.seedInput.value || 'default';
+        this.rng = this.seededRNG(seed);
+        this.reserve(0, 0, 120);
+        const planetClusters = this.generatePlanets();
+        this.generatePlanetaryClusters(planetClusters);
+        this.generateIsolatedStations();
+        this.generateStargateCluster();
+        this.generateCitadelCluster();
+        this.generateAncientRuins();
+        this.generateObservationPosts();
+        this.generateDeepSpaceMilitary();
+        this.generateDeepSpaceDepots();
+        this.updateViewBox();
+        this.populateInfoPanel();
+        this.populateDataList();
+    }
+
+    clear() {
+        Object.values(this.svgGroups).forEach(group => group.innerHTML = '');
+        this.placedObjects = [];
+        this.systemData = [];
+        this.dom.infoList.innerHTML = '';
+        this.dom.dataList.value = '';
+    }
+
+    generatePlanets() {
+        const C = CONFIG.planet;
+        const numPlanets = C.count(this.rng);
+        let planetClusters = [];
+        for (let i = 0; i < numPlanets; i++) {
+            const type = this.choice(CONFIG.planetTypes);
+            const name = this.choice(CONFIG.roots) + '-' + (Math.floor(this.rng() * 900) + 100);
+            const orbit = C.minOrbit + i * C.orbitStep + Math.floor(this.rng() * C.orbitVariance);
+            this.drawOrbit(orbit);
+            let px, py;
+            let tries = 0;
+            do {
+                const a = this.rng() * Math.PI * 2;
+                px = Math.cos(a) * orbit;
+                py = Math.sin(a) * orbit;
+                tries++;
+            } while (this.collides(px, py, C.clusterRadius) && tries < 25);
+            this.reserve(px, py, C.clusterRadius);
+            const radius = C.minRadius + this.rng() * C.radiusVariance;
+            const color = this.choice(CONFIG.planetColors);
+            this.drawShape('circle', px, py, radius, { fill: color }, this.svgGroups.planets);
+            const planetName = `${name} (${type})`;
+            this.drawText(px + 20, py + 5, planetName);
+            const planetData = { name: planetName, type: 'Planet', structures: [] };
+            this.systemData.push(planetData);
+            planetClusters.push({ x: px, y: py, name: name, data: planetData });
+        }
+        return planetClusters;
+    }
+
+    generatePlanetaryClusters(planetClusters) {
+        const C = CONFIG.planetaryCity;
+        planetClusters.forEach(p => {
+            const numCities = C.count(this.rng);
+            for (let c = 0; c < numCities; c++) {
+                const pos = this.findOpenSpot(p.x, p.y, C.size, C.minDist, C.distVariance);
+                if (pos) {
+                    const color = this.choice(CONFIG.cityColors);
+                    this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.svgGroups.stations);
+                    const cityName = p.name + ' City';
+                    this.drawText(pos.x + C.size + 2, pos.y, cityName);
+                    const cityData = { name: cityName, type: 'City', structures: [] };
+                    p.data.structures.push(cityData); 
+                    this.genSubCluster(pos.x, pos.y, cityData, 'Depot', C.depotCount(this.rng), 
+                        C.depotMinDist, C.depotDistVariance, 5, CONFIG.depotPrefixes, 'rect', CONFIG.depotColors);
                 }
-                sublist.appendChild(subLi);
-            });
-            li.appendChild(sublist);
+            }
+        });
+    }
 
-            // Add click to toggle
-            header.addEventListener('click', () => {
-                sublist.classList.toggle('visible');
-                header.classList.toggle('expanded');
-            });
+    generateIsolatedStations() {
+        const C = CONFIG.station;
+        const numStations = C.count(this.rng);
+        for (let i = 0; i < numStations; i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
+            if (pos) {
+                const color = this.choice(CONFIG.cityColors);
+                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.svgGroups.stations);
+                const stationName = this.choice(CONFIG.roots) + " " + this.choice(CONFIG.stationSuffixes);
+                this.drawText(pos.x + C.size + 2, pos.y, stationName);
+                const stationData = { name: stationName, type: 'Station', structures: [] };
+                this.systemData.push(stationData);
+                this.genSubCluster(pos.x, pos.y, stationData, 'Military', C.militaryCount(this.rng),
+                    C.militaryMinDist, C.militaryDistVariance, 5, CONFIG.militaryPrefixes, 'mil-rect', CONFIG.militaryColors);
+                this.genSubCluster(pos.x, pos.y, stationData, 'Depot', C.depotCount(this.rng),
+                    C.depotMinDist, C.depotDistVariance, 5, CONFIG.depotPrefixes, 'rect', CONFIG.depotColors);
+            }
         }
-        infoList.appendChild(li);
-    });
+    }
+
+    generateStargateCluster() {
+        const C = CONFIG.stargate;
+        const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
+        if (!pos) return;
+        this.drawShape('triangle', pos.x, pos.y, C.size, { fill: '#f0f0f0', stroke: '#f6c435', 'stroke-width': 2 }, this.svgGroups.stations);
+        const stationName = "The " + this.choice(CONFIG.stargateNames);
+        this.drawText(pos.x + C.size, pos.y + 3, stationName);
+        const stargateData = { name: stationName, type: 'Stargate', structures: [] };
+        this.systemData.push(stargateData);
+        this.genSubCluster(pos.x, pos.y, stargateData, 'High-Level City', C.cityCount(this.rng),
+            C.cityMinDist, C.cityDistVariance, C.citySize, CONFIG.roots, 'polygon', CONFIG.highLevelCityColors, " Prime", 6);
+        this.genSubCluster(pos.x, pos.y, stargateData, 'Depot', C.depotCount(this.rng),
+            C.depotMinDist, C.depotDistVariance, 5, CONFIG.depotPrefixes, 'rect', CONFIG.depotColors);
+    }
+    
+    generateCitadelCluster() {
+        const C = CONFIG.citadel;
+        const numCitadels = C.count(this.rng);
+        for (let i = 0; i < numCitadels; i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
+            if (!pos) continue;
+            this.drawShape('diamond', pos.x, pos.y, C.size, { fill: '#c0c0c0', stroke: '#ff4444', 'stroke-width': 2 }, this.svgGroups.stations);
+            const citadelName = "Citadel " + this.choice(CONFIG.citadelNames);
+            this.drawText(pos.x + C.size + 2, pos.y, citadelName);
+            const citadelData = { name: citadelName, type: 'Citadel', structures: [] };
+            this.systemData.push(citadelData);
+            this.genSubCluster(pos.x, pos.y, citadelData, 'Military', C.militaryCount(this.rng),
+                C.militaryMinDist, C.militaryDistVariance, 5, CONFIG.militaryPrefixes, 'mil-rect', CONFIG.citadelMilitaryColors);
+            this.genSubCluster(pos.x, pos.y, citadelData, 'Small City', C.cityCount(this.rng),
+                C.cityMinDist, C.cityDistVariance, C.citySize, CONFIG.roots, 'polygon', CONFIG.smallCityColors, " Minor", 6);
+        }
+    }
+
+    generateAncientRuins() {
+        const C = CONFIG.ruin;
+        for (let i = 0; i < C.count(this.rng); i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
+            if (pos) {
+                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: '#306b5a', stroke: '#5fbb9a', 'stroke-width': '1', sides: 5 }, this.svgGroups.ruins);
+                const ruinName = this.choice(CONFIG.ruinPrefixes) + " " + this.genDesignation();
+                this.drawText(pos.x + 12, pos.y, ruinName);
+                this.systemData.push({ name: ruinName, type: 'Ruin', structures: [] });
+            }
+        }
+    }
+
+    generateObservationPosts() {
+        const C = CONFIG.observationPost;
+        for (let i = 0; i < C.count(this.rng); i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
+            if (pos) {
+                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: '#4477aa', stroke: '#88bbff', 'stroke-width': '1' }, this.svgGroups.stations);
+                const postName = this.choice(CONFIG.observationPrefixes) + " " + this.genDesignation();
+                this.drawText(pos.x + 10, pos.y, postName);
+                this.systemData.push({ name: postName, type: 'Observation Post', structures: [] });
+            }
+        }
+    }
+
+    generateDeepSpaceMilitary() {
+        const C = CONFIG.deepSpaceMilitary;
+        for (let i = 0; i < C.count(this.rng); i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
+            if (pos) {
+                const color = this.choice(CONFIG.militaryColors);
+                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: color }, this.svgGroups.stations);
+                const militaryName = this.choice(CONFIG.militaryPrefixes) + " " + this.genDesignation();
+                this.drawText(pos.x + 10, pos.y, militaryName);
+                this.systemData.push({ name: militaryName, type: 'Military', structures: [] });
+            }
+        }
+    }
+
+    generateDeepSpaceDepots() {
+        const C = CONFIG.deepSpaceDepot;
+        for (let i = 0; i < C.count(this.rng); i++) {
+            const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
+            if (pos) {
+                const color = this.choice(CONFIG.depotColors);
+                this.drawShape('rect', pos.x, pos.y, C.size, { fill: color }, this.svgGroups.stations);
+                const depotName = this.choice(CONFIG.depotPrefixes) + " " + this.genDesignation();
+                this.drawText(pos.x + 8, pos.y, depotName);
+                this.systemData.push({ name: depotName, type: 'Deep-Space Depot', structures: [] });
+            }
+        }
+    }
+
+    genSubCluster(cx, cy, parentData, type, count, minDist, distVariance, size, namePrefixes, shape, colors, nameSuffix = "", shapeSides = 4) {
+        for (let i = 0; i < count; i++) {
+            const pos = this.findOpenSpot(cx, cy, size, minDist, distVariance);
+            if (pos) {
+                const color = this.choice(colors);
+                let name = (typeof namePrefixes === 'string') ? namePrefixes : this.choice(namePrefixes) + (nameSuffix || " " + this.genDesignation());
+                this.drawShape(shape, pos.x, pos.y, size, { fill: color, sides: shapeSides }, this.svgGroups.stations);
+                this.drawText(pos.x + size + 2, pos.y, name);
+                if (parentData) parentData.structures.push({ name: name, type: type, structures: [] });
+            }
+        }
+    }
+
+    populateInfoPanel() {
+        const typeOrder = ['Planet', 'Stargate', 'Citadel', 'Station', 'Ruin', 'Observation Post', 'Military', 'Deep-Space Depot'];
+        this.systemData.sort((a, b) => {
+            let aIndex = typeOrder.indexOf(a.type), bIndex = typeOrder.indexOf(b.type);
+            if (aIndex === -1) aIndex = 99;
+            if (bIndex === -1) bIndex = 99;
+            if (aIndex !== bIndex) return aIndex - bIndex;
+            return a.name.localeCompare(b.name);
+        });
+        const fragment = document.createDocumentFragment();
+        this.systemData.forEach(item => {
+            const li = document.createElement('li');
+            const header = document.createElement('div');
+            header.className = 'info-header';
+            header.textContent = `[${item.type}] ${item.name}`;
+            li.appendChild(header);
+            if (item.structures && item.structures.length > 0) {
+                header.classList.add('collapsible');
+                const sublist = document.createElement('ul');
+                sublist.className = 'info-sublist';
+                item.structures.forEach(subItem => sublist.appendChild(this.createInfoSubItem(subItem)));
+                li.appendChild(sublist);
+                header.addEventListener('click', () => {
+                    sublist.classList.toggle('visible');
+                    header.classList.toggle('expanded');
+                });
+            }
+            fragment.appendChild(li);
+        });
+        this.dom.infoList.appendChild(fragment);
+    }
+
+    createInfoSubItem(item) {
+        const li = document.createElement('li');
+        li.textContent = `[${item.type}] ${item.name}`;
+        if (item.structures && item.structures.length > 0) {
+            const subSubList = document.createElement('ul');
+            item.structures.forEach(subSubItem => subSubList.appendChild(this.createInfoSubItem(subSubItem)));
+            li.appendChild(subSubList);
+        }
+        return li;
+    }
+
+    populateDataList() {
+        let cities = [], depots = [];
+        const depotTypes = ['Depot', 'Military', 'Deep-Space Depot', 'Observation Post'];
+        const cityTypes = ['City', 'High-Level City', 'Small City', 'Station', 'Citadel', 'Stargate'];
+        const scanItem = (item) => {
+            if (cityTypes.includes(item.type)) cities.push(item.name);
+            if (depotTypes.includes(item.type)) depots.push(item.name);
+            if (item.structures) item.structures.forEach(scanItem);
+        };
+        this.systemData.forEach(scanItem);
+        this.dom.dataList.value = "--- CITIES & HUBS ---\n" + cities.sort().join("\n") + "\n\n--- DEPOTS & MILITARY ---\n" + depots.sort().join("\n");
+    }
+
+    toggleLabels() {
+        this.labelsVisible = !this.labelsVisible;
+        this.svgGroups.labels.style.display = this.labelsVisible ? '' : 'none';
+    }
+    
+    bindMapListeners() {
+        this.svg.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            this.isPanning = true;
+            this.startPoint = this.getSvgCoords(e);
+            this.svg.style.cursor = 'grabbing';
+        });
+        this.svg.addEventListener('mouseup', () => { this.isPanning = false; this.svg.style.cursor = 'grab'; });
+        this.svg.addEventListener('mouseleave', () => { this.isPanning = false; this.svg.style.cursor = 'grab'; });
+        this.svg.addEventListener('mousemove', e => {
+            if (!this.isPanning) return;
+            const p = this.getSvgCoords(e);
+            this.viewBox.x += (this.startPoint.x - p.x);
+            this.viewBox.y += (this.startPoint.y - p.y);
+            this.updateViewBox();
+        });
+        this.svg.addEventListener('wheel', e => {
+            e.preventDefault();
+            const m = this.getSvgCoords(e);
+            const f = e.deltaY < 0 ? 0.9 : 1.1;
+            this.viewBox.x = m.x - (m.x - this.viewBox.x) * f;
+            this.viewBox.y = m.y - (m.y - this.viewBox.y) * f;
+            this.viewBox.w *= f; this.viewBox.h *= f;
+            this.updateViewBox();
+        });
+    }
+
+    updateViewBox() { this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.w} ${this.viewBox.h}`); }
+    getSvgCoords(e) {
+        const r = this.svg.getBoundingClientRect();
+        const rx = this.viewBox.w / r.width, ry = this.viewBox.h / r.height;
+        return { x: this.viewBox.x + (e.clientX - r.left) * rx, y: this.viewBox.y + (e.clientY - r.top) * ry };
+    }
+    
+    seededRNG(seed) {
+        let h = 2166136261 >>> 0;
+        for (let i = 0; i < seed.length; i++) h = Math.imul(h ^ seed.charCodeAt(i), 16777619) >>> 0;
+        let s = h;
+        return () => { s = (Math.imul(48271, s) % 2147483647); return (s & 0x7fffffff) / 2147483647; };
+    }
+
+    choice(arr) { return arr[Math.floor(this.rng() * arr.length)]; }
+    collides(x, y, r) { return this.placedObjects.some(o => Math.hypot(x - o.x, y - o.y) < (r + o.r + 15)); }
+    reserve(x, y, r) { this.placedObjects.push({ x, y, r }); }
+
+    findOpenSpot(cx, cy, radius, minRange, rangeVariance, maxTries = 20) {
+        let tries = 0, x, y;
+        do {
+            const angle = this.rng() * Math.PI * 2;
+            const dist = minRange + this.rng() * rangeVariance;
+            x = cx + Math.cos(angle) * dist;
+            y = cy + Math.sin(angle) * dist;
+            tries++;
+        } while (this.collides(x, y, radius) && tries < maxTries);
+        if (tries < maxTries) { this.reserve(x, y, radius); return { x, y }; }
+        return null;
+    }
+
+    genDesignation() {
+        const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ', r = this.rng();
+        if (r < 0.3) return (Math.floor(this.rng() * 900) + 100).toString();
+        if (r < 0.7) return `${this.choice(letters)}-${(Math.floor(this.rng() * 90) + 10)}`;
+        return `${(Math.floor(this.rng() * 90) + 10)}-${this.choice(letters)}`;
+    }
+
+    createEl(tag, attributes) {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (const key in attributes) el.setAttribute(key, attributes[key]);
+        return el;
+    }
+
+    drawText(x, y, txt, small = false) {
+        const attrs = { x, y };
+        if (small) attrs['font-size'] = '10';
+        const textEl = this.createEl('text', attrs);
+        textEl.textContent = txt;
+        this.svgGroups.labels.appendChild(textEl);
+    }
+
+    drawOrbit(radius) {
+        this.svgGroups.orbits.appendChild(this.createEl('circle', { r: radius, fill: 'none', stroke: 'rgba(255,255,255,0.05)' }));
+    }
+
+    drawShape(type, x, y, r, attrs = {}, group) {
+        let shape, shapeAttrs = { ...attrs };
+        delete shapeAttrs.sides;
+        switch (type) {
+            case 'circle':
+                shapeAttrs.cx = x; shapeAttrs.cy = y; shapeAttrs.r = r;
+                shape = this.createEl('circle', shapeAttrs);
+                break;
+            case 'rect':
+                shapeAttrs.x = x - (r / 1.6); shapeAttrs.y = y - (r / 1.6);
+                shapeAttrs.width = r * 1.6; shapeAttrs.height = r * 1.6;
+                shape = this.createEl('rect', shapeAttrs);
+                break;
+            case 'mil-rect':
+                shapeAttrs.x = x - (r * 1.2); shapeAttrs.y = y - (r * 0.6);
+                shapeAttrs.width = r * 2.4; shapeAttrs.height = r * 1.2;
+                shape = this.createEl('rect', shapeAttrs);
+                break;
+            case 'polygon': case 'triangle': case 'diamond':
+                shapeAttrs.points = this.getPolyPoints(type, x, y, r, attrs.sides);
+                shape = this.createEl('polygon', shapeAttrs);
+                break;
+            default: return;
+        }
+        group.appendChild(shape);
+    }
+
+    getPolyPoints(type, x, y, r, sides) {
+        if (type === 'triangle') return `${x},${y - r} ${x + r * 0.866},${y + r * 0.5} ${x - r * 0.866},${y + r * 0.5}`;
+        if (type === 'diamond') return `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
+        let pts = [];
+        // Default to polygon (sides will be 5 for ruins, 6 for cities)
+        const numSides = sides || 6; // Default to 6 if not specified
+        for (let i = 0; i < numSides; i++) {
+            const ang = (Math.PI * 2 * i / numSides) - (Math.PI / numSides); // Offset rotation slightly for pentagon
+            pts.push((x + r * Math.cos(ang)) + ',' + (y + r * Math.sin(ang)));
+        }
+        return pts.join(' ');
+    }
 }
 
-// --- MAIN GENERATION FUNCTION ---
-function generate(){
-  clear();
-  const seed=document.getElementById('seedInput').value||'default';
-  const rng=seededRNG(seed);
-
-  const rad=document.createElementNS('http://www.w3.org/2000/svg','circle');rad.setAttribute('r',120);rad.setAttribute('fill','rgba(255,140,0,0.1)');rad.setAttribute('stroke','rgba(255,80,0,0.25)');rad.setAttribute('stroke-dasharray','6 4');svg.appendChild(rad);reserve(0,0,120);
-  const star=document.createElementNS('http://www.w3.org/2000/svg','circle');star.setAttribute('r',26);star.setAttribute('fill','#fff29f');svg.appendChild(star);reserve(0,0,26);
-
-  // --- SCI-FI DATASETS ---
-  const planetTypes=['Volcanic','Oceanic','Ice','Gas','Crystalline','Jungle','Desert','Artificial','Toxic','Shadow','Radiant','Coral','Storm','Barren','Frozen','Magma','Arid',
-                     'Tidal-Locked','Ringed World','Tesseract','Neutronium Core','Terraformed','Cybernetic','Rogue Planet','Ecumenopolis','Void-Wreck','Shattered','Relic Station',
-                     'Ruined Ecumenopolis', 'Forge World', 'Dead Archive', 'Phase-World', 'Karst World'];
-  const roots=['Koraon','Erebus','Nalara','Zephyra','Tarkon','Virella','Dravon','Solara','Elios','Thalor','Maren','Kythera','Rhegan','Velara','Xenon','Orpheus','Lythera','Zanros','Pereon','Vastor','Aelion','Boreas','Caelos','Vindra','Morthan','Seren','Ulyra','Tirion',
-               'Cygnus','Aether','Stygia','Chronos','Andromeda','Nebula','Kryll','Jovian','Rylos','Galactic','Astra','Hyperion','Veridian','Nova','Zydar','Onyx','Sagan',
-               'Proxima', 'Alpha-C', 'Beta-G', 'Sector-9', 'Rift', 'Aegis', 'Heliopax'];
-  
-  const depotPrefixes = ['Mining Depot', 'Fuel Depot', 'Trade Hub', 'Logistics Node', 'Refinery', 'Warehouse', 'Orbital Armory', 'Dockyard', 'Transit Station', 'Cloning Facility', 'Zero-G Farm', 'Quantum Relay', 'Aetherium Refinery', 'Nav-Buoy', 'Xeno-Containment'];
-  const militaryPrefixes = ['FWD Outpost', 'Patrol Point', 'E-Warfare Node', 'QRF Garrison', 'Listening Post', 'Sector HQ', 'Strike Wing', 'Armory', 'Defense Pylon', 'Checkpoint', 'Fighter Scramble', 'Shield Generator'];
-  const ruinPrefixes = ['Observation Post', 'Sentry Array', 'Deep Space Relay', 'Autonomous Beacon', 'Listening Station', 'Ancient Monitor', 'Xeno-Archive', 'Precursor Pylon', 'Silent Cartographer', 'Ruin-Core'];
-  const stationSuffixes = ['Station', 'Port', 'Citadel', 'Haven', 'Terminus', 'Reach', 'Nexus', 'Point', 'Sanctuary', 'Platform', 'Base', 'Spire', 'Anchor'];
-  // NEW DATASETS
-  const lowLevelPrefixes = ['Nav-Relay', 'Comm Buoy', 'Smuggler\'s Point', 'Sensor Post', 'Warning Beacon', 'Cargo Drop-off', 'Shuttle Stop', 'Sys-Checkpoint'];
-  
-  // --- END DATASETS ---
-
-  // 1. GENERATE PLANETS
-  const numPlanets=Math.floor(rng()*4)+5; // 5-8 planets
-  let planetClusters=[];
-  for(let i=0;i<numPlanets;i++){
-    const type=choice(rng,planetTypes);
-    const name=choice(rng,roots)+'-'+(Math.floor(rng()*900)+100);
-    const orbit=180+i*130+Math.floor(rng()*30);
-    const orbitC=document.createElementNS('http://www.w3.org/2000/svg','circle');orbitC.setAttribute('r',orbit);orbitC.setAttribute('fill','none');orbitC.setAttribute('stroke','rgba(255,255,255,0.05)');svg.appendChild(orbitC);
-    let px,py;let tries=0;do{const a=rng()*Math.PI*2;px=Math.cos(a)*orbit;py=Math.sin(a)*orbit;tries++;}while(collides(px,py,20)&&tries<25);reserve(px,py,20);
-    const planet=document.createElementNS('http://www.w3.org/2000/svg','circle');planet.setAttribute('cx',px);planet.setAttribute('cy',py);planet.setAttribute('r',12+rng()*8);planet.setAttribute('fill',choice(rng,['#4cc9f0','#f72585','#b5179e','#7209b7','#3a0ca3','#4361ee','#4895ef','#4cc9f0']));svg.appendChild(planet);
-    
-    const planetName = `${name} (${type})`;
-    drawText(px+20,py+5, planetName);
-    
-    // NEW: Add to data
-    const planetData = { name: planetName, type: 'Planet', structures: [] };
-    systemData.push(planetData);
-    planetClusters.push({x:px,y:py,name:name, data: planetData}); // Pass data object
-  }
-
-  // 2. GENERATE PLANETARY CLUSTERS (Cities + Depots)
-  planetClusters.forEach(p=>{
-    const numCities=Math.floor(rng()*3)+1; // 1-3 cities
-    for(let c=0;c<numCities;c++){
-      const angle=rng()*Math.PI*2;const dist=40+rng()*50;const cx=p.x+Math.cos(angle)*dist;const cy=p.y+Math.sin(angle)*dist;
-      if(!collides(cx,cy,8)){
-        reserve(cx,cy,8);
-        const city=document.createElementNS('http://www.w3.org/2000/svg','polygon');city.setAttribute('points',polygonPoints(cx,cy,8,6));city.setAttribute('fill',choice(rng,['#00ffff','#ff66ff','#a8f7ff','#b8aaff']));svg.appendChild(city);
-        
-        const cityName = p.name + ' City';
-        drawText(cx+10,cy, cityName);
-        
-        // NEW: Add to data
-        const cityData = { name: cityName, type: 'City', structures: [] };
-        p.data.structures.push(cityData); // Add to parent planet
-
-        // Add depots near city
-        const depCount=2+Math.floor(rng()*4); // 2-5 depots
-        for(let d=0;d<depCount;d++){
-          const ang=rng()*Math.PI*2;const dist2=25+rng()*25;const dx=cx+Math.cos(ang)*dist2;const dy=cy+Math.sin(ang)*dist2;
-          if(!collides(dx,dy,5)){
-            reserve(dx,dy,5);
-            const depot=document.createElementNS('http://www.w3.org/2000/svg','rect');depot.setAttribute('x',dx-4);depot.setAttribute('y',dy-4);depot.setAttribute('width',8);depot.setAttribute('height',8);depot.setAttribute('fill',choice(rng,['#ffcc00','#ffaa00','#ff9933','#ffd633']));svg.appendChild(depot);
-            const depotName = choice(rng, depotPrefixes) + " " + generateDesignation(rng);
-            drawText(dx+8,dy, depotName);
-            
-            // NEW: Add to data
-            cityData.structures.push({ name: depotName, type: 'Depot' });
-          }
-        }
-      }
-    }
-  });
-
-  // 3. GENERATE ISOLATED STATIONS (Hubs + Depots + Military)
-  const clusterCount=5+Math.floor(rng()*4); // 5-8 stations
-  for(let i=0;i<clusterCount;i++){
-    const baseX=rng()*1000-500,baseY=rng()*800-400;
-    const cityX=baseX+rng()*40-20,cityY=baseY+rng()*40-20;
-    reserve(cityX,cityY,8);
-    const hex=document.createElementNS('http://www.w3.org/2000/svg','polygon');hex.setAttribute('points',polygonPoints(cityX,cityY,8,6));hex.setAttribute('fill',choice(rng,['#00ffff','#ff66ff','#a8f7ff','#b8aaff']));svg.appendChild(hex);
-    
-    const stationName = choice(rng, roots) + " " + choice(rng, stationSuffixes);
-    drawText(cityX+10,cityY, stationName);
-    
-    // NEW: Add to data
-    const stationData = { name: stationName, type: 'Station', structures: [] };
-    systemData.push(stationData);
-
-    // Add military depots near station
-    const militaryCount=4+Math.floor(rng()*5); // 4-8 military depots
-    for(let m=0;m<militaryCount;m++){
-      const ang=rng()*Math.PI*2;const dist=30+rng()*40;const mx=cityX+Math.cos(ang)*dist;const my=cityY+Math.sin(ang)*dist;
-      if(!collides(mx,my,5)){
-        reserve(mx,my,5);
-        const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');rect.setAttribute('x',mx-6);rect.setAttribute('y',my-3);rect.setAttribute('width',12);rect.setAttribute('height',6);rect.setAttribute('fill',choice(rng,['#888','#66aaff','#99bbff','#bbbbbb','#4455aa']));svg.appendChild(rect);
-        const militaryName = choice(rng, militaryPrefixes) + " " + generateDesignation(rng);
-        drawText(mx+10,my, militaryName);
-
-        // NEW: Add to data
-        stationData.structures.push({ name: militaryName, type: 'Military' });
-      }
-    }
-
-    // Add civilian depots near station
-    const depCount = 3 + Math.floor(rng() * 4); // 3-6 depots
-    for(let d=0;d<depCount;d++){
-      const ang=rng()*Math.PI*2;const dist2=25+rng()*35; // Tighter orbit
-      const dx=cityX+Math.cos(ang)*dist2;const dy=cityY+Math.sin(ang)*dist2;
-      if(!collides(dx,dy,5)){
-        reserve(dx,dy,5);
-        const depot=document.createElementNS('http://www.w3.org/2000/svg','rect');depot.setAttribute('x',dx-4);depot.setAttribute('y',dy-4);depot.setAttribute('width',8);depot.setAttribute('height',8);depot.setAttribute('fill',choice(rng,['#ffcc00','#ffaa00','#ff9933','#ffd633']));svg.appendChild(depot);
-        const depotName = choice(rng, depotPrefixes) + " " + generateDesignation(rng);
-        drawText(dx+8,dy, depotName);
-        
-        // NEW: Add to data
-        stationData.structures.push({ name: depotName, type: 'Depot' });
-      }
-    }
-  }
-
-  // 4. GENERATE ANCIENT RUINS (Autonomous)
-  const ruinCount = 5 + Math.floor(rng() * 4); // 5-8 ruins
-  for (let i = 0; i < ruinCount; i++) {
-    const rx = rng() * 1200 - 600;
-    const ry = rng() * 1200 - 600;
-    const r = 8; 
-    if (!collides(rx, ry, r)) {
-      reserve(rx, ry, r);
-      const ruin = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      const points = `${rx},${ry - r} ${rx + r},${ry} ${rx},${ry + r} ${rx - r},${ry}`;
-      ruin.setAttribute('points', points);
-      ruin.setAttribute('fill', '#306b5a'); 
-      ruin.setAttribute('stroke', '#5fbb9a');
-      ruin.setAttribute('stroke-width', '1');
-      svg.appendChild(ruin);
-      
-      const ruinName = choice(rng, ruinPrefixes) + " " + generateDesignation(rng);
-      drawText(rx + 12, ry, ruinName);
-
-      // NEW: Add to data
-      systemData.push({ name: ruinName, type: 'Ruin', structures: [] });
-    }
-  }
-  
-  // 5. NEW: GENERATE LOW-LEVEL STATIONS
-  const lowLevelCount = 8 + Math.floor(rng() * 8); // 8-15
-  for (let i = 0; i < lowLevelCount; i++) {
-    const lx = rng() * 1400 - 700; // Spread out further
-    const ly = rng() * 1400 - 700;
-    const r = 6;
-    if (!collides(lx, ly, r)) {
-        reserve(lx, ly, r);
-        const station = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        station.setAttribute('points', trianglePoints(lx, ly, r));
-        station.setAttribute('fill', '#4477aa');
-        station.setAttribute('stroke', '#88bbff');
-        station.setAttribute('stroke-width', '1');
-        svg.appendChild(station);
-
-        const stationName = choice(rng, lowLevelPrefixes) + " " + generateDesignation(rng);
-        drawText(lx + 10, ly + 3, stationName);
-        
-        // NEW: Add to data
-        systemData.push({ name: stationName, type: 'Low-Level Station', structures: [] });
-    }
-  }
-  
-  // 6. NEW: GENERATE DEEP-SPACE DEPOTS
-  const deepDepotCount = 10 + Math.floor(rng() * 10); // 10-19
-  for (let i = 0; i < deepDepotCount; i++) {
-    const dx = rng() * 1500 - 750; // Spread out
-    const dy = rng() * 1500 - 750;
-    const r = 5;
-    if (!collides(dx, dy, r)) {
-        reserve(dx, dy, r);
-        const depot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        depot.setAttribute('x', dx - 4);
-        depot.setAttribute('y', dy - 4);
-        depot.setAttribute('width', 8);
-        depot.setAttribute('height', 8);
-        depot.setAttribute('fill', choice(rng, ['#ffcc00', '#ffaa00', '#ff9933', '#ffd633']));
-        svg.appendChild(depot);
-
-        const depotName = choice(rng, depotPrefixes) + " " + generateDesignation(rng);
-        drawText(dx + 8, dy, depotName);
-
-        // NEW: Add to data
-        systemData.push({ name: depotName, type: 'Deep-Space Depot', structures: [] });
-    }
-  }
-
-  updateViewBox();
-  populateInfoPanel(); // NEW: Populate the list
-}
-
-// --- EVENT LISTENERS ---
-document.getElementById('generateBtn').addEventListener('click',generate);
-document.getElementById('randomSeedBtn').addEventListener('click',()=>{document.getElementById('seedInput').value='S'+Math.floor(Math.random()*900000+100000);generate()});
-document.getElementById('toggleLabelsBtn').addEventListener('click',()=>{labelsVisible=!labelsVisible;svg.querySelectorAll('text').forEach(t=>t.style.display=labelsVisible?'inline':'none')});
-
-// NEW: Info panel toggle
-document.getElementById('infoToggleBtn').addEventListener('click', () => {
-    document.getElementById('infoPanel').classList.toggle('hidden');
+document.addEventListener('DOMContentLoaded', () => {
+    const domElements = {
+        svg: document.getElementById('map'),
+        infoList: document.getElementById('infoList'),
+        dataList: document.getElementById('generatedDataList'),
+        seedInput: document.getElementById('seedInput'),
+        generateBtn: document.getElementById('generateBtn'),
+        randomSeedBtn: document.getElementById('randomSeedBtn'),
+        toggleLabelsBtn: document.getElementById('toggleLabelsBtn'),
+        infoPanel: document.getElementById('infoPanel'),
+        infoToggleBtn: document.getElementById('infoToggleBtn')
+    };
+    const generator = new StarSystemGenerator(domElements.svg, domElements);
+    generator.init();
 });
-
-// Map listeners (Unchanged)
-svg.addEventListener('mousedown',e=>{if(e.button!==0)return;isPanning=true;startPoint=getSvgCoordinates(e);svg.style.cursor='grabbing'});
-svg.addEventListener('mouseup',()=>{isPanning=false;svg.style.cursor='grab'});
-svg.addEventListener('mouseleave',()=>{isPanning=false;svg.style.cursor='grab'});
-svg.addEventListener('mousemove',e=>{if(!isPanning)return;const p=getSvgCoordinates(e);viewBox.x+=(startPoint.x-p.x);viewBox.y+=(startPoint.y-p.y);updateViewBox()});
-svg.addEventListener('wheel',e=>{e.preventDefault();const m=getSvgCoordinates(e);const f=e.deltaY<0?0.9:1.1;viewBox.x=m.x-(m.x-viewBox.x)*f;viewBox.y=m.y-(m.y-viewBox.y)*f;viewBox.w*=f;viewBox.h*=f;updateViewBox()});
-
-// Initial load
-document.getElementById('seedInput').value='S'+Math.floor(Math.random()*900000+100000);
-generate();
 </script>
 </body>
 </html>
-</body>
-</html>
+
