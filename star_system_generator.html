@@ -19,9 +19,29 @@
   #infoPanel.hidden { margin-right: -300px; }
   #infoToggleBtn { padding: 8px 12px; background: #0b3c57; color: #aee1ff; border: none; cursor: pointer; font-weight: 700; }
   #infoToggleBtn:hover { background: #0e4a6d; }
-  #infoListContainer { flex: 1; overflow-y: auto; padding: 15px; box-sizing: border-box; }
-  #infoListContainer h2 { font-size: 1.2em; color: #fff; margin: 0 0 10px 0; border-bottom: 1px solid #072839; padding-bottom: 5px; }
-  #infoList { list-style: none; padding: 0; margin: 0; }
+  #infoListContainer { flex: 1; overflow-y: auto; padding-top: 15px; box-sizing: border-box; }
+  
+  /* --- NEW DESCRIPTION STYLES --- */
+  #systemDescription {
+    padding: 0 15px 15px 15px;
+    border-bottom: 1px solid #072839;
+    margin-bottom: 10px;
+  }
+  #systemDescription h2 {
+    font-size: 1.3em;
+    color: #f6c435; /* Gold color for title */
+    margin: 0 0 5px 0;
+  }
+  #systemDescription p {
+    font-size: 0.9em;
+    color: #b8dcec;
+    margin: 0;
+    line-height: 1.4;
+  }
+  /* --- END NEW STYLES --- */
+
+  #infoListContainer h2.directory-title { font-size: 1.2em; color: #fff; margin: 0 15px 10px 15px; border-bottom: 1px solid #072839; padding-bottom: 5px; }
+  #infoList { list-style: none; padding: 0 15px; margin: 0; }
   #infoList > li { margin-bottom: 8px; }
   .info-header { background: #072839; padding: 6px 10px; border-radius: 4px; font-size: 0.9em; font-weight: 600; color: #cfeff7; }
   .info-header.collapsible { cursor: pointer; color: #fff; }
@@ -54,7 +74,13 @@
   <div id="infoPanel" class="hidden">
     <button id="infoToggleBtn">Toggle Panel</button>
     <div id="infoListContainer">
-      <h2>System Directory</h2>
+      <!-- NEW: System Description Container -->
+      <div id="systemDescription">
+        <h2 id="systemNameLabel">System: ...</h2>
+        <p id="systemInfoText">Generating system data...</p>
+      </div>
+      
+      <h2 class="directory-title">System Directory</h2>
       <ul id="infoList"></ul>
     </div>
   </div>
@@ -62,17 +88,27 @@
 const CONFIG = {
     planetTypes: ['Volcanic','Oceanic','Ice','Gas','Crystalline','Jungle','Desert','Artificial','Toxic','Shadow','Radiant','Coral','Storm','Barren','Frozen','Magma','Arid',
                   'Tidal-Locked','Ringed World','Tesseract','Neutronium Core','Terraformed','Cybernetic','Rogue Planet','Ecumenopolis','Void-Wreck','Shattered','Relic Station',
-                  'Ruined Ecumenopolis', 'Forge World', 'Dead Archive', 'Phase-World', 'Karst World'],
+                  'Ruined Ecumenopolis', 'Forge World', 'Dead Archive', 'Phase-World', 'Karst World', 'Mycelial', 'Archipelago', 'Chrono-Locked', 'Prism-World'],
     roots: ['Koraon','Erebus','Nalara','Zephyra','Tarkon','Virella','Dravon','Solara','Elios','Thalor','Maren','Kythera','Rhegan','Velara','Xenon','Orpheus','Lythera','Zanros','Pereon','Vastor','Aelion','Boreas','Caelos','Vindra','Morthan','Seren','Ulyra','Tirion',
             'Cygnus','Aether','Stygia','Chronos','Andromeda','Nebula','Kryll','Jovian','Rylos','Galactic','Astra','Hyperion','Veridian','Nova','Zydar','Onyx','Sagan',
-            'Proxima', 'Alpha-C', 'Beta-G', 'Sector-9', 'Rift', 'Aegis', 'Heliopax'],
-    depotPrefixes: ['Mining Depot', 'Fuel Depot', 'Trade Hub', 'Logistics Node', 'Refinery', 'Warehouse', 'Orbital Armory', 'Dockyard', 'Transit Station', 'Cloning Facility', 'Zero-G Farm', 'Quantum Relay', 'Aetherium Refinery', 'Nav-Buoy', 'Xeno-Containment'],
-    militaryPrefixes: ['FWD Outpost', 'Patrol Point', 'E-Warfare Node', 'QRF Garrison', 'Listening Post', 'Sector HQ', 'Strike Wing', 'Armory', 'Defense Pylon', 'Checkpoint', 'Fighter Scramble', 'Shield Generator'],
-    ruinPrefixes: ['Ancient Monitor', 'Xeno-Archive', 'Precursor Pylon', 'Silent Cartographer', 'Ruin-Core', 'Autonomous Beacon', 'Deep Space Relay', 'Shattered Pylon', 'Void-Fragment'],
+            'Proxima', 'Alpha-C', 'Beta-G', 'Sector-9', 'Rift', 'Aegis', 'Heliopax', 'Gliese', 'Trappist', 'Kepler', 'Odysseus', 'Procyon', 'Altair'],
+    depotPrefixes: ['Mining Depot', 'Fuel Depot', 'Trade Hub', 'Logistics Node', 'Refinery', 'Warehouse', 'Orbital Armory', 'Dockyard', 'Transit Station', 'Cloning Facility', 'Zero-G Farm', 'Quantum Relay', 'Aetherium Refinery', 'Nav-Buoy', 'Xeno-Containment', 'Bio-Vat', 'Scrap Yard', 'Comms Relay', 'Sensor Hub'],
+    militaryPrefixes: ['FWD Outpost', 'Patrol Point', 'E-Warfare Node', 'QRF Garrison', 'Listening Post', 'Sector HQ', 'Strike Wing', 'Armory', 'Defense Pylon', 'Checkpoint', 'Fighter Scramble', 'Shield Generator', 'Blockade Runner', 'Fleet Anchorage', 'Torpedo Battery', 'Tac-Response Base'],
+    ruinPrefixes: ['Ancient Monitor', 'Xeno-Archive', 'Precursor Pylon', 'Silent Cartographer', 'Ruin-Core', 'Autonomous Beacon', 'Deep Space Relay', 'Shattered Pylon', 'Void-Fragment', 'Derelict Vessel', 'Lost Colony', 'Cyclopean Structure', 'Void-Signal'],
     stationSuffixes: ['Station', 'Port', 'Citadel', 'Haven', 'Terminus', 'Reach', 'Nexus', 'Point', 'Sanctuary', 'Platform', 'Base', 'Spire', 'Anchor'],
     citadelNames: ['Aegis', 'Bastion', 'Sanctum', 'Vigil', 'Bulwark', 'Stronghold', 'Fortress'],
     stargateNames: ['Nexus', 'Rift-Gate', 'Void-Stream', 'Path', 'Threshold', 'Epsilon-Gate', 'Omicron-Relay'],
     observationPrefixes: ['Observation Post', 'Listening Post', 'Sensor Array', 'E-Warfare Node', 'Deep Scan Relay', 'Patrol Point', 'Checkpoint', 'Sentry Hub', 'Watchtower'],
+    
+    // NEW: Datasets for System Description
+    systemNames: ['Orionis', 'Pleiades Sector', 'Rift-Alpha', 'Astra-9', 'Nebula-Veridian', 'Erebus-Pass', 'Hyperion-Gate', 'Koraon-Expanse', 'Vesper-Reach', 'Andromeda-C-3', 'Stygia-Nexus'],
+    factions: ['Terran Hegemony', 'Solar Concordat', 'Cygnus Collective', 'Aethelred Core', 'Orion Spur Alliance', 'Vind-Co', 'The Guild of Navigators', 'Kessler Syndicate', 'The Precursors (remnants)', 'Rift-Haulers', 'The Andromedan Compact', 'Jupiter Division'],
+    quirk_discovery: ['a routine survey mission', 'a miscalculated FTL jump', 'following ancient star charts', 'a desperate escape from pirates', 'a long-range sensor ghost', 'a classified military probe', 'the last transmission of a lost freighter'],
+    quirk_feature: ['a high concentration of rare isotopes', 'unusual gravimetric distortions', 'a perfectly preserved Precursor artifact', 'a system-wide debris field from an ancient battle', 'a strategically vital chokepoint', 'a unique quantum resonance', 'the only known source of Aetherium', 'a stable wormhole anomaly', 'a colossal derelict ship of unknown origin'],
+    quirk_situation: ['is now heavily contested', 'remains a closely-guarded secret', 'is a bustling trade hub', 'is under strict quarantine', 'is a lawless haven for smugglers and pirates', 'is a major military staging ground', 'is a protected neutral zone', 'is prohibitively dangerous to navigate', 'is considered a holy site by the Cygnus Collective'],
+    
+    discoveryYear: (rng) => Math.floor(rng() * 200) + 2250, // e.g., 2250-2449
+    
     planetColors: ['#4cc9f0','#f72585','#b5179e','#7209b7','#3a0ca3','#4361ee','#4895ef','#4cc9f0'],
     cityColors: ['#00ffff','#ff66ff','#a8f7ff','#b8aaff'],
     highLevelCityColors: ['#a8f7ff','#b8aaff', '#e0e0ff'],
@@ -143,6 +179,7 @@ class StarSystemGenerator {
         this.isPanning = false;
         this.startPoint = { x: 0, y: 0 };
         this.labelsVisible = true;
+        this.systemName = '...'; // Store system name
         this.svgGroups = {
             orbits: this.createEl('g', { id: 'orbitsGroup' }),
             planets: this.createEl('g', { id: 'planetsGroup' }),
@@ -181,6 +218,8 @@ class StarSystemGenerator {
         const seed = this.dom.seedInput.value || 'default';
         this.rng = this.seededRNG(seed);
         this.reserve(0, 0, 120);
+
+        // Generate all map objects first
         const planetClusters = this.generatePlanets();
         this.generatePlanetaryClusters(planetClusters);
         this.generateIsolatedStations();
@@ -190,6 +229,10 @@ class StarSystemGenerator {
         this.generateObservationPosts();
         this.generateDeepSpaceMilitary();
         this.generateDeepSpaceDepots();
+        
+        // Generate description *after* map RNG is used
+        this.generateSystemDescription(); 
+        
         this.updateViewBox();
         this.populateInfoPanel();
         this.populateDataList();
@@ -201,6 +244,27 @@ class StarSystemGenerator {
         this.systemData = [];
         this.dom.infoList.innerHTML = '';
         this.dom.dataList.value = '';
+        // Reset description panel
+        this.dom.systemNameLabel.textContent = 'System: ...';
+        this.dom.systemInfoText.textContent = 'Generating system data...';
+    }
+
+    // NEW: Generates and displays the system description
+    generateSystemDescription() {
+        const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const systemDesignation = (Math.floor(this.rng() * 90) + 10) + '-' + this.choice(letters);
+        this.systemName = this.choice(CONFIG.systemNames) + " " + systemDesignation;
+        
+        const year = CONFIG.discoveryYear(this.rng);
+        const faction = this.choice(CONFIG.factions);
+        const discovery = this.choice(CONFIG.quirk_discovery);
+        const feature = this.choice(CONFIG.quirk_feature);
+        const situation = this.choice(CONFIG.quirk_situation);
+        
+        const description = `Discovered in ${year} by ${faction} following ${discovery}, the ${this.systemName} system is notable for ${feature}. Today, the system ${situation}.`;
+        
+        this.dom.systemNameLabel.textContent = `System: ${this.systemName}`;
+        this.dom.systemInfoText.textContent = description;
     }
 
     generatePlanets() {
@@ -548,10 +612,9 @@ class StarSystemGenerator {
         if (type === 'triangle') return `${x},${y - r} ${x + r * 0.866},${y + r * 0.5} ${x - r * 0.866},${y + r * 0.5}`;
         if (type === 'diamond') return `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
         let pts = [];
-        // Default to polygon (sides will be 5 for ruins, 6 for cities)
-        const numSides = sides || 6; // Default to 6 if not specified
+        const numSides = sides || 6;
         for (let i = 0; i < numSides; i++) {
-            const ang = (Math.PI * 2 * i / numSides) - (Math.PI / numSides); // Offset rotation slightly for pentagon
+            const ang = (Math.PI * 2 * i / numSides) - (Math.PI / numSides);
             pts.push((x + r * Math.cos(ang)) + ',' + (y + r * Math.sin(ang)));
         }
         return pts.join(' ');
@@ -568,7 +631,10 @@ document.addEventListener('DOMContentLoaded', () => {
         randomSeedBtn: document.getElementById('randomSeedBtn'),
         toggleLabelsBtn: document.getElementById('toggleLabelsBtn'),
         infoPanel: document.getElementById('infoPanel'),
-        infoToggleBtn: document.getElementById('infoToggleBtn')
+        infoToggleBtn: document.getElementById('infoToggleBtn'),
+        // NEW: Add system description elements
+        systemNameLabel: document.getElementById('systemNameLabel'),
+        systemInfoText: document.getElementById('systemInfoText')
     };
     const generator = new StarSystemGenerator(domElements.svg, domElements);
     generator.init();
@@ -576,4 +642,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
