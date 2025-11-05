@@ -15,13 +15,14 @@
   button:hover{background:#ffda66}
   #map{flex:1;cursor:grab;background:linear-gradient(180deg,#021018,#031018)}
   text{font-size:11px;fill:#cfeff7;user-select:none}
+  /* MODIFICATION: Removed .hidden default state */
   #infoPanel { width: 300px; background: #041924; border-left: 2px solid #072839; display: flex; flex-direction: column; transition: margin-right 0.3s ease; z-index: 10; }
+  /* This class is now only applied/removed by the toggle button */
   #infoPanel.hidden { margin-right: -300px; }
   #infoToggleBtn { padding: 8px 12px; background: #0b3c57; color: #aee1ff; border: none; cursor: pointer; font-weight: 700; }
   #infoToggleBtn:hover { background: #0e4a6d; }
   #infoListContainer { flex: 1; overflow-y: auto; padding-top: 15px; box-sizing: border-box; }
   
-  /* --- NEW DESCRIPTION STYLES --- */
   #systemDescription {
     padding: 0 15px 15px 15px;
     border-bottom: 1px solid #072839;
@@ -29,7 +30,7 @@
   }
   #systemDescription h2 {
     font-size: 1.3em;
-    color: #f6c435; /* Gold color for title */
+    color: #f6c435;
     margin: 0 0 5px 0;
   }
   #systemDescription p {
@@ -38,7 +39,6 @@
     margin: 0;
     line-height: 1.4;
   }
-  /* --- END NEW STYLES --- */
 
   #infoListContainer h2.directory-title { font-size: 1.2em; color: #fff; margin: 0 15px 10px 15px; border-bottom: 1px solid #072839; padding-bottom: 5px; }
   #infoList { list-style: none; padding: 0 15px; margin: 0; }
@@ -71,10 +71,11 @@
     <textarea id="generatedDataList" rows="12" style="width:100%;background:#072839;color:#aee1ff;border:1px solid #0b3c57;border-radius:6px;font-size:0.8em; box-sizing: border-box;" readonly placeholder="Generated cities and depots will appear here..."></textarea>
   </div>
   <svg id="map" viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="Star system map"></svg>
-  <div id="infoPanel" class="hidden">
+  <!-- MODIFICATION: Removed the 'hidden' class to make panel visible by default -->
+  <div id="infoPanel">
     <button id="infoToggleBtn">Toggle Panel</button>
     <div id="infoListContainer">
-      <!-- NEW: System Description Container -->
+      <!-- System Description Container -->
       <div id="systemDescription">
         <h2 id="systemNameLabel">System: ...</h2>
         <p id="systemInfoText">Generating system data...</p>
@@ -100,7 +101,6 @@ const CONFIG = {
     stargateNames: ['Nexus', 'Rift-Gate', 'Void-Stream', 'Path', 'Threshold', 'Epsilon-Gate', 'Omicron-Relay'],
     observationPrefixes: ['Observation Post', 'Listening Post', 'Sensor Array', 'E-Warfare Node', 'Deep Scan Relay', 'Patrol Point', 'Checkpoint', 'Sentry Hub', 'Watchtower'],
     
-    // NEW: Datasets for System Description
     systemNames: ['Orionis', 'Pleiades Sector', 'Rift-Alpha', 'Astra-9', 'Nebula-Veridian', 'Erebus-Pass', 'Hyperion-Gate', 'Koraon-Expanse', 'Vesper-Reach', 'Andromeda-C-3', 'Stygia-Nexus'],
     factions: ['Terran Hegemony', 'Solar Concordat', 'Cygnus Collective', 'Aethelred Core', 'Orion Spur Alliance', 'Vind-Co', 'The Guild of Navigators', 'Kessler Syndicate', 'The Precursors (remnants)', 'Rift-Haulers', 'The Andromedan Compact', 'Jupiter Division'],
     quirk_discovery: ['a routine survey mission', 'a miscalculated FTL jump', 'following ancient star charts', 'a desperate escape from pirates', 'a long-range sensor ghost', 'a classified military probe', 'the last transmission of a lost freighter'],
@@ -109,7 +109,48 @@ const CONFIG = {
     
     discoveryYear: (rng) => Math.floor(rng() * 200) + 2250, // e.g., 2250-2449
     
-    planetColors: ['#4cc9f0','#f72585','#b5179e','#7209b7','#3a0ca3','#4361ee','#4895ef','#4cc9f0'],
+    // MODIFICATION: Replaced planetColors array with a logical color map
+    planetColorMap: {
+        'Volcanic': '#E74C3C', // red
+        'Oceanic': '#3498DB', // blue
+        'Ice': '#F2F3F4', // white
+        'Gas': '#F1C40F', // yellow
+        'Crystalline': '#A569BD', // purple
+        'Jungle': '#27AE60', // green
+        'Desert': '#D35400', // brown
+        'Artificial': '#9B59B6', // purple
+        'Toxic': '#8E44AD', // dark purple
+        'Shadow': '#34495E', // dark blue-grey
+        'Radiant': '#FEFDFE', // very bright white
+        'Coral': '#FF6B6B', // coral/pink
+        'Storm': '#7D97A0', // stormy grey-blue
+        'Barren': '#9E9D9B', // stony grey
+        'Frozen': '#B2DFFC', // light blue
+        'Magma': '#F39C12', // orange
+        'Arid': '#E67E22', // orange-brown
+        'Tidal-Locked': '#2ECC71', // green-blue
+        'Ringed World': '#FAD7A0', // sandy + ring (color is for planet)
+        'Tesseract': '#117864', // dark teal
+        'Neutronium Core': '#2C3E50', // very dark
+        'Terraformed': '#2ECC71', // bright green
+        'Cybernetic': '#1ABC9C', // teal
+        'Rogue Planet': '#5D6D7E', // dark grey
+        'Ecumenopolis': '#BDC3C7', // light grey city
+        'Void-Wreck': '#4A4E51', // dark wreckage grey
+        'Shattered': '#A1887F', // brown-grey rubble
+        'Relic Station': '#797D7F', // old metal
+        'Ruined Ecumenopolis': '#707B7C', // dark city
+        'Forge World': '#E67E22', // industrial orange
+        'Dead Archive': '#AAB7B8', // pale grey
+        'Phase-World': '#AF7AC5', // shifting purple
+        'Karst World': '#CACFD2', // light grey rock
+        'Mycelial': '#D2B4DE', // light purple
+        'Archipelago': '#48C9B0', // tropical green/blue
+        'Chrono-Locked': '#FAD7A0', // sandy
+        'Prism-World': '#E8DAEF', // very light purple
+        'default': '#95A5A6' // default grey
+    },
+
     cityColors: ['#00ffff','#ff66ff','#a8f7ff','#b8aaff'],
     highLevelCityColors: ['#a8f7ff','#b8aaff', '#e0e0ff'],
     smallCityColors: ['#00aaaa','#aa66aa'],
@@ -179,7 +220,7 @@ class StarSystemGenerator {
         this.isPanning = false;
         this.startPoint = { x: 0, y: 0 };
         this.labelsVisible = true;
-        this.systemName = '...'; // Store system name
+        this.systemName = '...';
         this.svgGroups = {
             orbits: this.createEl('g', { id: 'orbitsGroup' }),
             planets: this.createEl('g', { id: 'planetsGroup' }),
@@ -187,6 +228,8 @@ class StarSystemGenerator {
             ruins: this.createEl('g', { id: 'ruinsGroup' }),
             labels: this.createEl('g', { id: 'labelsGroup' })
         };
+        this.generationFragments = null; 
+        
         Object.values(this.svgGroups).forEach(group => this.svg.appendChild(group));
         const dangerZone = this.createEl('circle', { r: 120, fill: 'rgba(255,140,0,0.1)', stroke: 'rgba(255,80,0,0.25)', 'stroke-dasharray': '6 4' });
         const star = this.createEl('circle', { r: 26, fill: '#fff29f' });
@@ -209,6 +252,7 @@ class StarSystemGenerator {
         });
         this.dom.toggleLabelsBtn.addEventListener('click', () => this.toggleLabels());
         this.dom.infoToggleBtn.addEventListener('click', () => {
+            // This button now correctly toggles the class
             this.dom.infoPanel.classList.toggle('hidden');
         });
     }
@@ -219,7 +263,14 @@ class StarSystemGenerator {
         this.rng = this.seededRNG(seed);
         this.reserve(0, 0, 120);
 
-        // Generate all map objects first
+        this.generationFragments = {
+            orbits: document.createDocumentFragment(),
+            planets: document.createDocumentFragment(),
+            stations: document.createDocumentFragment(),
+            ruins: document.createDocumentFragment(),
+            labels: document.createDocumentFragment()
+        };
+
         const planetClusters = this.generatePlanets();
         this.generatePlanetaryClusters(planetClusters);
         this.generateIsolatedStations();
@@ -230,9 +281,16 @@ class StarSystemGenerator {
         this.generateDeepSpaceMilitary();
         this.generateDeepSpaceDepots();
         
-        // Generate description *after* map RNG is used
         this.generateSystemDescription(); 
         
+        this.svgGroups.orbits.appendChild(this.generationFragments.orbits);
+        this.svgGroups.planets.appendChild(this.generationFragments.planets);
+        this.svgGroups.stations.appendChild(this.generationFragments.stations);
+        this.svgGroups.ruins.appendChild(this.generationFragments.ruins);
+        this.svgGroups.labels.appendChild(this.generationFragments.labels);
+        
+        this.generationFragments = null;
+
         this.updateViewBox();
         this.populateInfoPanel();
         this.populateDataList();
@@ -244,12 +302,10 @@ class StarSystemGenerator {
         this.systemData = [];
         this.dom.infoList.innerHTML = '';
         this.dom.dataList.value = '';
-        // Reset description panel
         this.dom.systemNameLabel.textContent = 'System: ...';
         this.dom.systemInfoText.textContent = 'Generating system data...';
     }
 
-    // NEW: Generates and displays the system description
     generateSystemDescription() {
         const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         const systemDesignation = (Math.floor(this.rng() * 90) + 10) + '-' + this.choice(letters);
@@ -286,8 +342,11 @@ class StarSystemGenerator {
             } while (this.collides(px, py, C.clusterRadius) && tries < 25);
             this.reserve(px, py, C.clusterRadius);
             const radius = C.minRadius + this.rng() * C.radiusVariance;
-            const color = this.choice(CONFIG.planetColors);
-            this.drawShape('circle', px, py, radius, { fill: color }, this.svgGroups.planets);
+            
+            // MODIFICATION: Use color map instead of random choice
+            const color = CONFIG.planetColorMap[type] || CONFIG.planetColorMap['default'];
+            
+            this.drawShape('circle', px, py, radius, { fill: color }, this.generationFragments.planets);
             const planetName = `${name} (${type})`;
             this.drawText(px + 20, py + 5, planetName);
             const planetData = { name: planetName, type: 'Planet', structures: [] };
@@ -305,7 +364,7 @@ class StarSystemGenerator {
                 const pos = this.findOpenSpot(p.x, p.y, C.size, C.minDist, C.distVariance);
                 if (pos) {
                     const color = this.choice(CONFIG.cityColors);
-                    this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.svgGroups.stations);
+                    this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.generationFragments.stations);
                     const cityName = p.name + ' City';
                     this.drawText(pos.x + C.size + 2, pos.y, cityName);
                     const cityData = { name: cityName, type: 'City', structures: [] };
@@ -324,7 +383,7 @@ class StarSystemGenerator {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
             if (pos) {
                 const color = this.choice(CONFIG.cityColors);
-                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.svgGroups.stations);
+                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: color, sides: 6 }, this.generationFragments.stations);
                 const stationName = this.choice(CONFIG.roots) + " " + this.choice(CONFIG.stationSuffixes);
                 this.drawText(pos.x + C.size + 2, pos.y, stationName);
                 const stationData = { name: stationName, type: 'Station', structures: [] };
@@ -341,7 +400,7 @@ class StarSystemGenerator {
         const C = CONFIG.stargate;
         const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
         if (!pos) return;
-        this.drawShape('triangle', pos.x, pos.y, C.size, { fill: '#f0f0f0', stroke: '#f6c435', 'stroke-width': 2 }, this.svgGroups.stations);
+        this.drawShape('triangle', pos.x, pos.y, C.size, { fill: '#f0f0f0', stroke: '#f6c435', 'stroke-width': 2 }, this.generationFragments.stations);
         const stationName = "The " + this.choice(CONFIG.stargateNames);
         this.drawText(pos.x + C.size, pos.y + 3, stationName);
         const stargateData = { name: stationName, type: 'Stargate', structures: [] };
@@ -358,7 +417,7 @@ class StarSystemGenerator {
         for (let i = 0; i < numCitadels; i++) {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 50);
             if (!pos) continue;
-            this.drawShape('diamond', pos.x, pos.y, C.size, { fill: '#c0c0c0', stroke: '#ff4444', 'stroke-width': 2 }, this.svgGroups.stations);
+            this.drawShape('diamond', pos.x, pos.y, C.size, { fill: '#c0c0c0', stroke: '#ff4444', 'stroke-width': 2 }, this.generationFragments.stations);
             const citadelName = "Citadel " + this.choice(CONFIG.citadelNames);
             this.drawText(pos.x + C.size + 2, pos.y, citadelName);
             const citadelData = { name: citadelName, type: 'Citadel', structures: [] };
@@ -375,7 +434,7 @@ class StarSystemGenerator {
         for (let i = 0; i < C.count(this.rng); i++) {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
             if (pos) {
-                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: '#306b5a', stroke: '#5fbb9a', 'stroke-width': '1', sides: 5 }, this.svgGroups.ruins);
+                this.drawShape('polygon', pos.x, pos.y, C.size, { fill: '#306b5a', stroke: '#5fbb9a', 'stroke-width': '1', sides: 5 }, this.generationFragments.ruins);
                 const ruinName = this.choice(CONFIG.ruinPrefixes) + " " + this.genDesignation();
                 this.drawText(pos.x + 12, pos.y, ruinName);
                 this.systemData.push({ name: ruinName, type: 'Ruin', structures: [] });
@@ -388,7 +447,7 @@ class StarSystemGenerator {
         for (let i = 0; i < C.count(this.rng); i++) {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
             if (pos) {
-                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: '#4477aa', stroke: '#88bbff', 'stroke-width': '1' }, this.svgGroups.stations);
+                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: '#4477aa', stroke: '#88bbff', 'stroke-width': '1' }, this.generationFragments.stations);
                 const postName = this.choice(CONFIG.observationPrefixes) + " " + this.genDesignation();
                 this.drawText(pos.x + 10, pos.y, postName);
                 this.systemData.push({ name: postName, type: 'Observation Post', structures: [] });
@@ -396,13 +455,15 @@ class StarSystemGenerator {
         }
     }
 
+
+
     generateDeepSpaceMilitary() {
         const C = CONFIG.deepSpaceMilitary;
         for (let i = 0; i < C.count(this.rng); i++) {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
             if (pos) {
                 const color = this.choice(CONFIG.militaryColors);
-                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: color }, this.svgGroups.stations);
+                this.drawShape('mil-rect', pos.x, pos.y, C.size, { fill: color }, this.generationFragments.stations);
                 const militaryName = this.choice(CONFIG.militaryPrefixes) + " " + this.genDesignation();
                 this.drawText(pos.x + 10, pos.y, militaryName);
                 this.systemData.push({ name: militaryName, type: 'Military', structures: [] });
@@ -416,7 +477,7 @@ class StarSystemGenerator {
             const pos = this.findOpenSpot(0, 0, C.size, C.minRange, C.maxRange - C.minRange, 20);
             if (pos) {
                 const color = this.choice(CONFIG.depotColors);
-                this.drawShape('rect', pos.x, pos.y, C.size, { fill: color }, this.svgGroups.stations);
+                this.drawShape('rect', pos.x, pos.y, C.size, { fill: color }, this.generationFragments.stations);
                 const depotName = this.choice(CONFIG.depotPrefixes) + " " + this.genDesignation();
                 this.drawText(pos.x + 8, pos.y, depotName);
                 this.systemData.push({ name: depotName, type: 'Deep-Space Depot', structures: [] });
@@ -430,7 +491,7 @@ class StarSystemGenerator {
             if (pos) {
                 const color = this.choice(colors);
                 let name = (typeof namePrefixes === 'string') ? namePrefixes : this.choice(namePrefixes) + (nameSuffix || " " + this.genDesignation());
-                this.drawShape(shape, pos.x, pos.y, size, { fill: color, sides: shapeSides }, this.svgGroups.stations);
+                this.drawShape(shape, pos.x, pos.y, size, { fill: color, sides: shapeSides }, this.generationFragments.stations);
                 this.drawText(pos.x + size + 2, pos.y, name);
                 if (parentData) parentData.structures.push({ name: name, type: type, structures: [] });
             }
@@ -574,11 +635,11 @@ class StarSystemGenerator {
         if (small) attrs['font-size'] = '10';
         const textEl = this.createEl('text', attrs);
         textEl.textContent = txt;
-        this.svgGroups.labels.appendChild(textEl);
+        this.generationFragments.labels.appendChild(textEl);
     }
 
     drawOrbit(radius) {
-        this.svgGroups.orbits.appendChild(this.createEl('circle', { r: radius, fill: 'none', stroke: 'rgba(255,255,255,0.05)' }));
+        this.generationFragments.orbits.appendChild(this.createEl('circle', { r: radius, fill: 'none', stroke: 'rgba(255,255,255,0.05)' }));
     }
 
     drawShape(type, x, y, r, attrs = {}, group) {
@@ -632,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleLabelsBtn: document.getElementById('toggleLabelsBtn'),
         infoPanel: document.getElementById('infoPanel'),
         infoToggleBtn: document.getElementById('infoToggleBtn'),
-        // NEW: Add system description elements
         systemNameLabel: document.getElementById('systemNameLabel'),
         systemInfoText: document.getElementById('systemInfoText')
     };
