@@ -15,9 +15,7 @@
   button:hover{background:#ffda66}
   #map{flex:1;cursor:grab;background:linear-gradient(180deg,#021018,#031018)}
   text{font-size:11px;fill:#cfeff7;user-select:none}
-  /* MODIFICATION: Removed .hidden default state */
   #infoPanel { width: 300px; background: #041924; border-left: 2px solid #072839; display: flex; flex-direction: column; transition: margin-right 0.3s ease; z-index: 10; }
-  /* This class is now only applied/removed by the toggle button */
   #infoPanel.hidden { margin-right: -300px; }
   #infoToggleBtn { padding: 8px 12px; background: #0b3c57; color: #aee1ff; border: none; cursor: pointer; font-weight: 700; }
   #infoToggleBtn:hover { background: #0e4a6d; }
@@ -71,11 +69,9 @@
     <textarea id="generatedDataList" rows="12" style="width:100%;background:#072839;color:#aee1ff;border:1px solid #0b3c57;border-radius:6px;font-size:0.8em; box-sizing: border-box;" readonly placeholder="Generated cities and depots will appear here..."></textarea>
   </div>
   <svg id="map" viewBox="-500 -500 1000 1000" xmlns="http://www.w3.org/2000/svg" aria-label="Star system map"></svg>
-  <!-- MODIFICATION: Removed the 'hidden' class to make panel visible by default -->
   <div id="infoPanel">
     <button id="infoToggleBtn">Toggle Panel</button>
     <div id="infoListContainer">
-      <!-- System Description Container -->
       <div id="systemDescription">
         <h2 id="systemNameLabel">System: ...</h2>
         <p id="systemInfoText">Generating system data...</p>
@@ -109,7 +105,6 @@ const CONFIG = {
     
     discoveryYear: (rng) => Math.floor(rng() * 200) + 2250, // e.g., 2250-2449
     
-    // MODIFICATION: Replaced planetColors array with a logical color map
     planetColorMap: {
         'Volcanic': '#E74C3C', // red
         'Oceanic': '#3498DB', // blue
@@ -252,8 +247,19 @@ class StarSystemGenerator {
         });
         this.dom.toggleLabelsBtn.addEventListener('click', () => this.toggleLabels());
         this.dom.infoToggleBtn.addEventListener('click', () => {
-            // This button now correctly toggles the class
             this.dom.infoPanel.classList.toggle('hidden');
+        });
+        
+        // OPTIMIZATION: Use event delegation for the info panel list
+        this.dom.infoList.addEventListener('click', (e) => {
+            const header = e.target.closest('.info-header.collapsible');
+            if (header) {
+                const sublist = header.nextElementSibling;
+                if (sublist && sublist.classList.contains('info-sublist')) {
+                    sublist.classList.toggle('visible');
+                    header.classList.toggle('expanded');
+                }
+            }
         });
     }
 
@@ -283,6 +289,7 @@ class StarSystemGenerator {
         
         this.generateSystemDescription(); 
         
+        // This batch-append pattern is already highly optimized.
         this.svgGroups.orbits.appendChild(this.generationFragments.orbits);
         this.svgGroups.planets.appendChild(this.generationFragments.planets);
         this.svgGroups.stations.appendChild(this.generationFragments.stations);
@@ -297,10 +304,11 @@ class StarSystemGenerator {
     }
 
     clear() {
-        Object.values(this.svgGroups).forEach(group => group.innerHTML = '');
+        // OPTIMIZATION: Use replaceChildren() for efficient DOM clearing
+        Object.values(this.svgGroups).forEach(group => group.replaceChildren());
         this.placedObjects = [];
         this.systemData = [];
-        this.dom.infoList.innerHTML = '';
+        this.dom.infoList.replaceChildren();
         this.dom.dataList.value = '';
         this.dom.systemNameLabel.textContent = 'System: ...';
         this.dom.systemInfoText.textContent = 'Generating system data...';
@@ -343,7 +351,6 @@ class StarSystemGenerator {
             this.reserve(px, py, C.clusterRadius);
             const radius = C.minRadius + this.rng() * C.radiusVariance;
             
-            // MODIFICATION: Use color map instead of random choice
             const color = CONFIG.planetColorMap[type] || CONFIG.planetColorMap['default'];
             
             this.drawShape('circle', px, py, radius, { fill: color }, this.generationFragments.planets);
@@ -507,6 +514,8 @@ class StarSystemGenerator {
             if (aIndex !== bIndex) return aIndex - bIndex;
             return a.name.localeCompare(b.name);
         });
+
+        // This DocumentFragment pattern is already optimized.
         const fragment = document.createDocumentFragment();
         this.systemData.forEach(item => {
             const li = document.createElement('li');
@@ -514,16 +523,16 @@ class StarSystemGenerator {
             header.className = 'info-header';
             header.textContent = `[${item.type}] ${item.name}`;
             li.appendChild(header);
+
             if (item.structures && item.structures.length > 0) {
                 header.classList.add('collapsible');
                 const sublist = document.createElement('ul');
                 sublist.className = 'info-sublist';
                 item.structures.forEach(subItem => sublist.appendChild(this.createInfoSubItem(subItem)));
                 li.appendChild(sublist);
-                header.addEventListener('click', () => {
-                    sublist.classList.toggle('visible');
-                    header.classList.toggle('expanded');
-                });
+                
+                // OPTIMIZATION: Removed per-item event listener.
+                // It is now handled by the delegation in bindUIListeners().
             }
             fragment.appendChild(li);
         });
@@ -588,6 +597,9 @@ class StarSystemGenerator {
 
     updateViewBox() { this.svg.setAttribute('viewBox', `${this.viewBox.x} ${this.viewBox.y} ${this.viewBox.w} ${this.viewBox.h}`); }
     getSvgCoords(e) {
+        // Caching getBoundingClientRect() is complex to do correctly
+        // without a resize observer, so we'll leave this as-is.
+        // The main performance bottleneck was DOM appending, which is already solved.
         const r = this.svg.getBoundingClientRect();
         const rx = this.viewBox.w / r.width, ry = this.viewBox.h / r.height;
         return { x: this.viewBox.x + (e.clientX - r.left) * rx, y: this.viewBox.y + (e.clientY - r.top) * ry };
